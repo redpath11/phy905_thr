@@ -3,10 +3,10 @@
 #include<iomanip>
 #include<cmath>
 #include<string>
-/*
 #include<stdio.h>
-#include<stdlib.h>
 #include<math.h>
+/*
+#include<stdlib.h>
 */
 
 using namespace std;
@@ -14,8 +14,8 @@ using namespace std;
 /* Function Declarations */
 inline double f(double x);
 inline double exact(double x);
-int SolvePoisson1(int asize);// First step algorithm
-int SolvePoisson2(int n);// Race Car algorithm
+void SolvePoisson1(int n);// First step algorithm
+void SolvePoisson2(int n);// Race Car algorithm
 void FileArray(string filename,double* ary,int dim);
 void FileSoltn(string filename,double* x,double* sol,double* ext,int dim);
 
@@ -23,78 +23,68 @@ void FileSoltn(string filename,double* x,double* sol,double* ext,int dim);
 int main()
 {
 //    SolvePoisson1(10);
-    SolvePoisson2(10);
+//    SolvePoisson2(10);
+    int i=10;
+    while(i<=1000)
+    {
+       SolvePoisson1(i);
+       i*=10;
+    }
     return 0;
 
 }
 
-int SolvePoisson1(int asize)
+void SolvePoisson1(int n)
 {
     // Declare arrays
-    double * x; x = new double[asize+1];// array of grid points
-    double *ft; ft = new double[asize+1];// vector f
-    double * d; d = new double[asize+1];// diagonal matrix elements
-    double * e; e = new double[asize+1];// off diagonal matrix elements
-    double * u; u = new double[asize+1];// solution vector
-    double * ana; ana = new double[asize+1];// exact analytical result
- //   double * el;el= new double[asize];
+    double * d = new double[n+1];// diagonal matrix elements
+    double *ft = new double[n+1];// right hand side
+    double *e1 = new double[n+1];// upper off-diagonal band
+    double *e2 = new double[n+1];// lower off-diagonal band
+    double * x = new double[n+1];// array of grid points
+    double * u = new double[n+1];// solution vector
+    double * ana = new double[n+1];// exact analytical result
     // Set step size
-    double h = 1./((double) asize);
+    double h = 1./((double) n);
     double hh= h*h;
 
     // Initialize arrays
-    u[0]=0.; u[asize]=0.;// boundary conditions
-    d[0] = d[asize] = 2.;
-    for(int i=0;i<asize+1;i++)
+    u[0]=0.; u[n]=0.;// boundary conditions
+    for(int i=0;i<=n;i++)
     {
         x[i] = i*h;
-        e[i]=-1.;
+	d[i] = 2.0;
+        e1[i]=-1.; e2[i]=-1.;
         ft[i] = hh*f(i*h);
         ana[i] = exact(i*h);
     }
-//    el[0]=-1.;
-    // Write results/tests to file
-    ofstream ofile; ofstream tfile;
-    tfile.open("../Benchmark/test1.out");
-    tfile << "x" << "   " << "d" << "   " << "e" << "   " << "f" << "   " << "ana" << endl;
 
-    for(int i=0;i<asize;i++)
+    // Forward substitution
+    for(int i=2;i<n;i++)
     {
-        tfile << x[i] << "   " << d[i] << "   " << e[i] << "   " << ft[i] << "   " << ana[i] << endl;
-    }
-    tfile.close();
-
-
-    for(int i=1;i<asize;i++)
-    {
-        d[i] = d[i] - (e[i-1]*e[i-1])/(d[i-1]);
-        ft[i] = ft[i] - (e[i-1]*ft[i-1])/(d[i-1]);
+        d[i]  -= (e1[i]*e2[i])/d[i-1];
+        ft[i] -= (e2[i-1]*ft[i-1])/(d[i-1]);
     }
 
-    u[asize-1] = ft[asize-1] / d[asize-1];
-    for(int i=asize-1;i>=1;i--)
+    // Backward substitution
+    u[n-1] = ft[n-1] / d[n-1];
+    for(int i=n-2;i>0;i--)
     {
-        u[i] = (ft[i] - e[i]*u[i])/d[i];
+        u[i] = (ft[i] - e1[i]*u[i+1])/d[i];
     }
 
-    // Test solver
-    ofile.open("../Benchmark/result.out");
-    ofile << setiosflags(ios::showpoint | ios::uppercase);
-    ofile << setw(15) << "x";
-    ofile << setw(15) << "sol";
-    ofile << setw(15) << "exact" << endl;
-    for(int i=0;i<asize;i++)
-    {
-        ofile << setw(15) << setprecision(8) << x[i];
-        ofile << setw(15) << setprecision(8) << u[i];
-        ofile << setw(15) << setprecision(8) << ana[i] << endl;
-    }
-    delete [] x; delete [] ft; delete [] d; delete [] e; delete [] u;
+    /* Write results to file */
+    char f[64];
+    sprintf(f,"solution%i.out",n);
+//    FileSoltn("solution1.out",x,u,ana,n+1);
+    FileSoltn(f,x,u,ana,n+1);
+    delete [] x; delete [] ft; delete [] d; delete [] e1; delete [] e2; delete [] u;
 }
 
 
-int SolvePoisson2(int n)
+void SolvePoisson2(int n)
 {
+    // Declare arrays
     double * d = new double[n+1];// diagonal matrix elements
     double * ft= new double[n+1];// right hand side
     double * x = new double[n+1];// x-value
@@ -109,6 +99,7 @@ int SolvePoisson2(int n)
     u[0] = u[n] = 0.0;//boundary conditions
     d[0] = d[n] = 2.0;//diagonal elements
 
+    // Initialize x, ~f, analytic solution
     for(int i=0;i<=n;i++)
     {
         x[i] = i*h;
@@ -116,6 +107,7 @@ int SolvePoisson2(int n)
         ana[i]= exact(i*h);
     }
 
+    // Precalculate diagonal array
     for(int i=1;i<n;i++)
     {
         d[i]=(i+1.0)/((double) i);
@@ -131,12 +123,15 @@ int SolvePoisson2(int n)
     {
         u[i] = (ft[i]+u[i+1])/d[i];
     }
-    // Check shit
-//    FileArray("solution.out",u,n+1);
-    FileSoltn("solution.out",x,u,ana,n+1);
+    /* Write results to file */
+    char f[64];
+    sprintf(f,"solution%i.out",n);
+    FileSoltn(f,x,u,ana,n+1);
     delete [] x; delete [] ft; delete [] d; delete [] u;
 }
 
+// Write out the elements of the specified array to a file
+// in ../Benchmark/<filename>
 void FileArray(string filename,double* ary,int dim)
 {
     string outpath = "../Benchmark/";
@@ -156,7 +151,7 @@ void FileArray(string filename,double* ary,int dim)
 // dimension as input
 void FileSoltn(string filename,double* x,double* sol,double* ext,int dim)
 {
-    string outpath = "../Benchmark/";
+    string outpath = "../output/";
     outpath.append(filename);
     ofstream ofile;
     ofile.open(outpath.c_str());
