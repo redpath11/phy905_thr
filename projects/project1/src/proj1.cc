@@ -8,6 +8,7 @@
 /*
 #include<stdlib.h>
 */
+#include "MatrixLib.hh"
 
 using namespace std;
 
@@ -24,12 +25,24 @@ int main()
 {
 //    SolvePoisson1(10);
 //    SolvePoisson2(10);
-    int i=10;
-    while(i<=1000)
+    int n=10;
+    // test LUDecomposition with small dimensino
+    double **M = AllocateMatrix(n,n);
+    for(int j=0;j<n;j++)
     {
-       SolvePoisson1(i);
-       i*=10;
+        M[j][j]=2.;
+        M[j][j+1]=-1.;
+        M[j+1][j]=-1.;
     }
+    WriteMatrix(M,n);
+    DeallocateMatrix(M,n,n);
+    /*
+    while(n<=1000)
+    {
+       SolvePoisson1(n);
+       n*=10;
+    }
+    */
     return 0;
 
 }
