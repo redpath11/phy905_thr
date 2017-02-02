@@ -1,0 +1,134 @@
+\documentclass[10pt,showpacs,preprintnumbers,footinbib,amsmath,amssymb,aps,prl,twocolumn,groupedaddress,superscriptaddress,showkeys]{revtex4-1}
+\usepackage{graphicx}
+\usepackage{dcolumn}
+\usepackage{bm}
+\usepackage[colorlinks=true,urlcolor=blue,citecolor=blue]{hyperref}
+\usepackage{color}
+
+\newcommand{\deriv}[3][]{% \deriv[<order>]{<func>}{<var>}
+	\ensuremath{ \frac{d^{#1} {#2}}{d {#3}^{#1}} } }
+
+\begin{document}
+\title{Project 1}
+\author{Thomas Redpath}
+\affiliation{Department of Physics, Michigan State University, Outer Space}
+\begin{abstract}
+
+We solve Poisson's equation numerically to examine the effects of tailoring a specialized algorithm on execution speed.
+Our best algorithm runs as $4n$ FLOPS with $n$ the dimensionality of the matrix. We also explore the onset of
+round-off errors and loss of precision as dimensionality becomes lareg.
+
+\end{abstract}
+\maketitle
+
+\section{Introduction}
+
+Poisson's equation plays a central role in electromagnetism as it governs how the electric potential $\Phi$ arrises from a
+localized charge distribution $\rho (\mathbf{r})$. Poisson's equation for spherically symmetric $\Phi$ and $\rho (\mathbf{r})$,
+where the substitution $\Phi(r) = \phi(r)/r$ had been made:
+
+\begin{equation*}
+	\deriv[2]{\phi}{r}= -4\pi r\rho(r).
+\end{equation*}
+Re-writting this equation to let $f$ stand for the combination of the r.h.s. terms, letting $\phi \rightarrow u$ and
+$r \rightarrow x$ and taking Dirichlet boundary conditions yields
+
+\begin{equation*}
+	-u''(x) = f(x), \hspace{0.5cm} x\in(0,1), \hspace{0.5cm} u(0) = u(1) = 0.
+\end{equation*}
+The solution is easily approximated by discretizing the interval $(0,1)$ and using a numerical definition of the second
+derivative.
+
+\section{Theory, algorithms and methods}
+
+\subsection{Discretizing Poisson's Equation}
+
+The numerical definition of a second derivative is derived from taking a Taylor expansion of the function $u(x)$.
+On a discretized interval, it may be expressed as
+
+\begin{equation*}
+	\deriv[2]{u}{x} _i \approx \frac{u_{i+1} + u_{i-1} - 2u_i}{h^2} + O(h^2)
+\end{equation*}
+where $h$ is the grid spacing and the subscripts index the grid points. With this notation, Poisson's equation may be
+re-written as
+
+\begin{equation*}
+	- \frac{u_{i+1} + u_{i-1} - 2u_i}{h^2} = f_i
+\end{equation*}
+With this formulation, it is apparent that we can re-cast the discretized Poisson equation as a system of linear equations
+for each grid point.
+
+\begin{equation*}
+	\mathbf{A} \mathbf{u} = h^2 \mathbf{f}
+\end{equation*}
+where $\mathbf{A}$ is a matrix with dimensionality given by the number of grid points $n$
+
+\begin{equation*}
+    \mathbf{A} = \begin{bmatrix}
+                           2& -1& 0 &\dots   & \dots &0 \\
+                           -1 & 2 & -1 &0 &\dots &\dots \\
+                           0&-1 &2 & -1 & 0 & \dots \\
+                           \dots & \dots   & \ddots &\ddots &\ddots & \dots \\
+                           0&\dots & \dots & -1 &2& -1 \\
+                           0&\dots & \dots & 0  &-1 & 2 \\
+                      \end{bmatrix}
+\end{equation*}
+and $\mathbf{f}$ represents a column vector whose elements are given by the source function
+evaluated at each of the grid points. For simplicity of notation, we will absorb the $h^2$ into the
+column vector elements ($h^2 \mathbf{f} = \mathbf{b}$) so that the system of equations may
+be written $\mathbf{Au} = \mathbf{b}$. By applying numerical methods to solve Poisson's
+equation on a discretized grid with $n$ points, we are able to convert a second order differential
+equation into a system of $n$ equations.
+
+\subsection*{A General Algorithm}
+
+The matrix $\mathbf{A}$ given above is a special tridiagonal matrix with identical elements along
+the main and ``1-off'' diagonals. Our first algorithm solves the system of equations for a general
+tridiagonal matrix:
+
+\[
+\begin{bmatrix}
+	a_1 & m_1 & 0 & \dots & \dots & 0 \\
+	c_1 & a_2 & m_2 & 0 & \dots & 0 \\
+	0 & c_2 & a_3 & m_3 & 0 & \dots \\
+	\vdots & & \ddots & \ddots & \ddots & \vdots \\
+	\vdots & & & c_{n-2} & \ddots & m_{n-1}\\
+	0 & & & & c_{n-1} & a_n \\
+\end{bmatrix}
+~
+\begin{bmatrix}
+	u_1\\
+	u_2\\
+	u_3\\
+	u_4\\
+	\vdots\\
+	u_n\\
+\end{bmatrix}
+~
+=
+~
+\begin{bmatrix}
+	b_1\\
+	b_2\\
+	b_3\\
+	b_4\\
+	\vdots\\
+	b_n\\
+\end{bmatrix}
+\]
+
+\subsection*{A Specialized Algorithm}
+
+\subsection*{LU Decomposition}
+
+\section{Results and discussions}
+
+
+
+\section{Conclusions}
+
+\begin{thebibliography}{99}
+\bibitem{miller2006} G.~A.~Miller, A.~K.~Opper, and E.~J.~Stephenson, Annu.~Rev.~Nucl.~Sci.~{\bf 56}, 253 (2006).
+\end{thebibliography}
+
+\end{document}
