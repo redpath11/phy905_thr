@@ -34,10 +34,10 @@ int main()
 //    SolvePoisson2(n);
 //    SolveLUDcmp(n);
     /**/
-    while(n<=1000)
+    while(n<=10000000)
     {
-       SolvePoisson1(n);
-//       SolvePoisson2(n);
+//       SolvePoisson1(n);
+       SolvePoisson2(n);
 
        n*=10;
     }
@@ -103,7 +103,7 @@ void SolvePoisson1(int n)
     char f[64];
     sprintf(f,"solution%i.out",n);
 //    FileSoltn("solution1.out",x,u,ana,n+1);
-    FileSoltn(f,x,u,ana,n+1);
+//    FileSoltn(f,x,u,ana,n+1);
     delete [] x; delete [] ft; delete [] d; delete [] e1; delete [] e2; delete [] u;
 }
 
