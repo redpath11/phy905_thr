@@ -4,6 +4,7 @@
 \usepackage{bm}
 \usepackage[colorlinks=true,urlcolor=blue,citecolor=blue]{hyperref}
 \usepackage{color}
+\usepackage{listings}
 
 \newcommand{\deriv}[3][]{% \deriv[<order>]{<func>}{<var>}
 	\ensuremath{ \frac{d^{#1} {#2}}{d {#3}^{#1}} } }
@@ -11,12 +12,12 @@
 \begin{document}
 \title{Project 1}
 \author{Thomas Redpath}
-\affiliation{Department of Physics, Michigan State University, Outer Space}
+\affiliation{Department of Physics, Michigan State University}
 \begin{abstract}
 
 We solve Poisson's equation numerically to examine the effects of tailoring a specialized algorithm on execution speed.
-Our best algorithm runs as $4n$ FLOPS with $n$ the dimensionality of the matrix. We also explore the onset of
-round-off errors and loss of precision as dimensionality becomes lareg.
+Our best algorithm requires $4n$ FLOPS where $n$ the dimensionality of the matrix. We also explore the onset of
+round-off errors and loss of precision as dimensionality becomes large.
 
 \end{abstract}
 \maketitle
@@ -39,7 +40,7 @@ $r \rightarrow x$ and taking Dirichlet boundary conditions yields
 The solution is easily approximated by discretizing the interval $(0,1)$ and using a numerical definition of the second
 derivative.
 
-\section{Theory, algorithms and methods}
+\section{Theory and algorithms}
 
 \subsection{Discretizing Poisson's Equation}
 
@@ -213,24 +214,98 @@ requires on the order of $2/3 n^3$ floating point operations.
 
 \section{Methods}
 
+We implemented the general algorithm described above in a C++ program
+that first dynamically allocates arrays to hold the main and ``1-off''
+diagonal elements of the array, the R.H.S. vector, a vector to hold the
+x positions of the grid points and an array to hold the analytic
+result evaluated at each grid point. Next, we initiallize these arrays
+then apply the forward and backward substitutions to populate an array
+holding the numerical approximation to the solution at each grid point.
+
+%% -------------------------- CODE LISTING -------------------------- %%
+
+%% 
+ \definecolor{mygreen}{rgb}{0,0.6,0}
+ \definecolor{mygray}{rgb}{0.5,0.5,0.5}
+ \definecolor{mymauve}{rgb}{0.58,0,0.82}
+
+ \lstset{ %
+   backgroundcolor=\color{white},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}
+   basicstyle=\footnotesize,        % the size of the fonts that are used for the code
+   breakatwhitespace=false,         % sets if automatic breaks should only happen at whitespace
+   breaklines=true,                 % sets automatic line breaking
+   captionpos=b,                    % sets the caption-position to bottom
+   commentstyle=\color{mygreen},    % comment style
+   deletekeywords={...},            % if you want to delete keywords from the given language
+   escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+   extendedchars=true,              % lets you use non-ASCII characters; for 8-bits encodings only, does not work with UTF-8
+   frame=single,	                   % adds a frame around the code
+   keepspaces=true,                 % keeps spaces in text, useful for keeping indentation of code (possibly needs columns=flexible)
+   keywordstyle=\color{blue},       % keyword style
+   language=C++,                 % the language of the code
+   otherkeywords={*,...},           % if you want to add more keywords to the set
+   numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
+   numbersep=5pt,                   % how far the line-numbers are from the code
+   numberstyle=\tiny\color{mygray}, % the style that is used for the line-numbers
+   rulecolor=\color{black},         % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
+   showspaces=false,                % show spaces everywhere adding particular underscores; it overrides 'showstringspaces'
+   showstringspaces=false,          % underline spaces within strings only
+   showtabs=false,                  % show tabs within strings adding particular underscores
+   stepnumber=2,                    % the step between two line-numbers. If it's 1, each line will be numbered
+   stringstyle=\color{mymauve},     % string literal style
+   tabsize=2,	                   % sets default tabsize to 2 spaces
+   title=\lstname                   % show the filename of files included with \lstinputlisting; also try caption instead of title
+ }
+
+ \lstinputlisting[linerange={78-90}]{../src/proj1.cc}
+
+As described in the previous section, the specialized algorithm
+reduces the number of computations per grid point by taking
+advantange of the form of tridiagonal matrix for this case. This
+allows us to precalculate the values of the $\tilde{d}$ array
+and simplify expressions involving the off-diagonal elements
+(since these are all -1).
+
+ \lstinputlisting[linerange={137-152}]{../src/proj1.cc}
+
+The LU decomposition is implemented using a set of functions
+provided by the instructor. The resulting arrays containing
+the solution were written out to files where they could be
+parsed and plotted using a simple Python script.
+
+
+\section{Results and discussion}
+
 \subsection{Execution time}
 
-We applied each of the procedures discussed in the previous section to solve
+We applied each of the procedures discussed in the previous sections to solve
 Poisson's equation. Table~\ref{tab:speedresults} compares the execution time
-as a function of number of grid points for each algorithm.
+as a function of number of grid points for each algorithm. As expected, the
+specialized algorithm which uses the minimal number of floating point
+operations runs the fastest. The LU Decomposition method is the least efficient
+since it sets up and manipulates a full $n \times n$ matrix. We also note
+that trying to apply the LU Decomposition method with $n=1000$ results in a
+segmentation fault.
 
 \begin{table}
 \centering
 	\begin{tabular}{ c | c c c }
-	 & \multicolumn{3}{c}{Time}\\
+	 & \multicolumn{3}{c}{Time [$\mu$s]}\\
 	$n$ & General & Specialized & LU Decomp\\
 \hline
-	10   & & & \\
-	100  & & & \\
-	1000 & & & \\
+	$10^{1}$ & 2       & 2       & 10 \\
+	$10^{2}$ & 7       & 5       & 3500 \\
+	$10^{3}$ & 62      & 50      & 1700000\\
+	$10^{4}$ & 600     & 555     & \\
+	$10^{5}$ & 6100    & 5100    & \\
+	$10^{6}$ & 32500   & 28300   & \\
+	$10^{7}$ & 244000  & 205000  & \\
 \hline
 	\end{tabular}
-	\caption{Summary of execution times for the algorithms used.}
+	\caption{Summary of execution times for the algorithms used.
+	We note that the execution time can vary from run to run due
+	to variations in CPU load. The execution time also varies
+	from platform to platform.}
 	\label{tab:speedresults}
 \end{table}
 
@@ -246,10 +321,36 @@ the DE confirms that this is indeed the correct solution.
 \end{equation*}
 
 We can then compare the results of our numerical solutions directly
-to the analytic results. Figure~\ref{fig:compexact} plots the results
-of the generalized algorithm compared to the exact solution.
+to the analytic results. FIG.~\ref{fig:compexact} plots the results
+of the generalized algorithm compared to the exact solution. We can
+see that the numerical estimation agrees well with the analytic
+result once at least 100 grid points are used.
 
-\begin{figure}
+We can also compute the relative error between the numerical estimate
+and the exact result
+
+\begin{equation*}
+	\epsilon = \log _{10} \left ( \left | \frac{v_i - u_i}{u_i}
+	\right | \right )
+\end{equation*}
+where $v_i$ is the numerical estimate to the solution and $u_i$ is
+the closed-form solution. There are two contributions to the error
+of this estimation: (1) truncation error resulting from the way we
+approximate the second derivative and (2) round-off error arising
+from subtraction of nearly equal numbers. The form for total error
+for the second derivative formula is derived in \citep{Mslides}.
+
+\begin{equation*}
+	|\epsilon | \leq \frac{f_0}{12} h^2 + \frac{2 \epsilon _M}{h^2} 
+\end{equation*}
+where $\epsilon _M$ is the limit set by the precision of a number's
+machine representation (roughly $10^{-7}$ and $10^{-16}$ for single
+and double precision respectively). The truncation error is
+proportional to $h^2$ and decreases with decreasing step size. The
+round-off error increases with decreasing step size and becomes the
+dominating term for $h\sim 10^7$. This is shown in FIG.~\ref{fig:rerr}
+
+\begin{figure*}
 \centering
 	\includegraphics{figures/sols.pdf}
 	\caption{A comparison of the results from the numerical solution
@@ -260,17 +361,55 @@ of the generalized algorithm compared to the exact solution.
 	Good agreement with the exact result is obtained once 100 grid
 	points are used.}
 	\label{fig:compexact}
-\end{figure}
+\end{figure*}
 
-\section{Results and discussions}
+\begin{figure*}
+\centering
+	\includegraphics{figures/rerr.pdf}
+	\caption{Log of the relative error vs. log of the step size.
+	The slope of -2 for log step size between -6 and -1 corresponds
+	to the decreasing error due to taking a smaller step size. This
+	indicates that for these step sizes, the truncation error is
+	the dominant term in the total error. This relationship disappears
+	for log step size equal to -7 because the round-off error surpasses
+	the truncation error as the dominant term in the total error.}
+	\label{fig:rerr}
+\end{figure*}
 
 
 
 \section{Conclusions}
 
+We have applied three different numerical algorithms to solve Poisson's
+equation. As expected, the specialized algorithm runs the fastest since
+it only stores and operates on the nonzero matrix elements while
+the full LU decomposition is slowed down by cumbersome manipulations of
+the full matrix. Additionally, we found that the round-off error begins
+to dominate over the truncation error for step sizes $\sim h=10^7$.
+
+\section{Appendix: Derivation of the Numerical Second Derivative Formula}
+
+Consider a Taylor expansions for the function $f$ about some point $x$ from
+above and below
+
+\begin{align*}
+	f(x+h) &= f(x) + h f'(x) + \frac{h^2}{2} f''(x) + \frac{h^3}{3!} f'''(x) +
+	\frac{h^4}{4!} f^{(4)}\\
+	f(x-h) &= f(x) - h f'(x) + \frac{h^2}{2} f''(x) - \frac{h^3}{3!} f'''(x) +
+	\frac{h^4}{4!} f^{(4)}
+\end{align*}
+Adding these equations and solving for $f''(x)$ yields
+
+\begin{equation*}
+	f''(x) = \frac{f(x+h) - 2f(x) + (f(x-h)}{h^2} - \frac{h^2}{12}f^{(4)}
+\end{equation*}
+from this result, we see how the truncation error is proportional to $h^2$.
+
+
 \begin{thebibliography}{99}
 %\bibitem{miller2006} G.~A.~Miller, A.~K.~Opper, and E.~J.~Stephenson, Annu.~Rev.~Nucl.~Sci.~{\bf 56}, 253 (2006).
 \bibitem{Morten} M. Hjorth-Jensen, Computational Physics Lecture Notes Fall 2015, August 2015.
+\bibitem{Mslides} M. Hjorth-Jensen, Computational Physics Notes, compphysics.github.io
 \bibitem{Golub1996} G. Golub, C. Van Loan, \textit{Matrix Computations} (John Hopkins University Press, 1996)
 \end{thebibliography}
 
