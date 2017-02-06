@@ -1,11 +1,11 @@
 // This program sets up a simple matrix with random values for the matrix elements
 // Matrices are always given by upper case variables
-#include <iostream>
+//#include <iostream>
 #include <new>
 #include <cstdio>
 #include <cstdlib>
-#include <cmath>
-#include <cstring>
+//#include <cmath>
+//#include <cstring>
 #include <time.h>
 
 using namespace std;
@@ -16,44 +16,10 @@ double ** AllocateMatrix(int, int);
 void DeallocateMatrix(double **, int, int);
 void MatrixInverse(double **, int);
 void WriteMatrix(double **, int);
+void FileMatrix(string,double **, int);
 void MatrixMultiplication(double **, double **, int);
 void LUDecomposition(double **, int, int *);
 void LUBackwardSubstitution(double **, int, int *, double *);
-
-/* Begin main function, reads from terminal mode the dimension
-int main(int argc, char *argv[])
-{
-  // Read from terminal the size of the matrix
-  int n = atoi(argv[1]);
-  // Memory for  matrix to invert and copy of it
-  double **A = AllocateMatrix(n, n);
-  double **B = AllocateMatrix(n, n);
-  // Define period and seed for standard random number generator
-  double invers_period = 1./RAND_MAX; // initialise the random number generator
-  srand(time(NULL));  // This produces the so-called seed in MC jargon
-  // Setting general square matrices with random matrix elements
-  for(int i = 0; i < n; i++) {
-    for(int j = 0; j < n; j++){
-      double x = double(rand())*invers_period;
-      A[i][j] = x;// replace with tridiagonal matrix from project 1
-      B[i][j] = A[i][j];
-    }
-  }
-  // Write out original matrix
-  cout << " Initial matrix A:" << endl;
-  WriteMatrix(A, n);
-  // calculate and return inverse matrix
-  MatrixInverse(B, n);
-  // Write out inverse matrix
-  cout << "Inverse  matrix of A:" << endl;
-  WriteMatrix(B, n);
-  // Check that A^-1A = identity matrix
-  cout << "Check that we get an identity matrix " << endl;
-  MatrixMultiplication(A,B,n);
-  return 0;
-
-} // End: function main()
-*/
 
 /*
    The function MatrixInverse() performs a matrix inversion
@@ -115,6 +81,7 @@ void DeallocateMatrix(double ** Matrix, int m, int n){
 
 // Write out a given matrix
 void WriteMatrix(double ** Matrix, int n){
+
   for(int i=0;i < n;i++){
     cout << endl;
      for (int j=0 ; j < n;j++){
@@ -122,6 +89,20 @@ void WriteMatrix(double ** Matrix, int n){
      }
   }
     cout << endl;
+}
+// Write out a given matrix to a file
+void FileMatrix(string filename,double ** Matrix, int n){
+    FILE *ofile;
+    ofile=fopen(filename.c_str(),"w");
+
+  for(int i=0;i < n;i++){
+    fprintf(ofile,"\n");
+     for (int j=0 ; j < n;j++){
+        fprintf(ofile,"  A[%2d][%2d] = %8.2E",i, j, Matrix[i][j]);
+     }
+  }
+    fprintf(ofile,"\n");
+    fclose(ofile);
 }
 
 // Straightforward matrix-matrix multiplication

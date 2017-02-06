@@ -80,20 +80,22 @@ be written $\mathbf{Au} = \mathbf{b}$. By applying numerical methods to solve Po
 equation on a discretized grid with $n$ points, we are able to convert a second order differential
 equation into a system of $n$ equations.
 
-\subsection*{A General Algorithm}
+\subsection*{The General Algorithm}
 
-The matrix $\mathbf{A}$ given above is a special tridiagonal matrix with identical elements along
+The matrix $\mathbf{A}$ given above is a tridiagonal matrix with identical elements along
 the main and ``1-off'' diagonals. Our first algorithm solves the system of equations for a general
-tridiagonal matrix:
+tridiagonal matrix using Gaussian elimination to reduce the matrix to an upper diagonal matrix,
+effectively solving for the last variable $u_n$, then backwards subtituting the result to solve
+for the remaining unknowns.
 
 \[
 \begin{bmatrix}
-	a_1 & m_1 & 0 & \dots & \dots & 0 \\
-	c_1 & a_2 & m_2 & 0 & \dots & 0 \\
-	0 & c_2 & a_3 & m_3 & 0 & \dots \\
+	d_1 & a_1 & 0 & \dots & \dots & 0 \\
+	c_1 & d_2 & a_2 & 0 & \dots & 0 \\
+	0 & c_2 & d_3 & a_3 & 0 & \dots \\
 	\vdots & & \ddots & \ddots & \ddots & \vdots \\
-	\vdots & & & c_{n-2} & \ddots & m_{n-1}\\
-	0 & & & & c_{n-1} & a_n \\
+	\vdots & & & c_{n-2} & \ddots & a_{n-1}\\
+	0 & & & & c_{n-1} & d_n \\
 \end{bmatrix}
 ~
 \begin{bmatrix}
@@ -108,18 +110,157 @@ tridiagonal matrix:
 =
 ~
 \begin{bmatrix}
-	b_1\\
-	b_2\\
-	b_3\\
-	b_4\\
+	f_1\\
+	f_2\\
+	f_3\\
+	f_4\\
 	\vdots\\
-	b_n\\
+	f_n\\
 \end{bmatrix}
 \]
 
-\subsection*{A Specialized Algorithm}
+The Gaussian elimination method uses the first row of the matrix to
+eliminate elements below the main diagonal:
+\begin{align*}
+	\mathrm{R2} \rightarrow \tilde{R2}&:
+	\begin{bmatrix}
+		0 & (d_2 - a_1 c_1/d_1) & a_2 & 0 \dots & 0\\
+	\end{bmatrix}
+%%	\mathrm{R3} \rightarrow \tilde{R3}&:
+%%	\begin{bmatrix}
+%%		0 & 0 & d_3 - (c_2 / \tilde{d_2}) & a_3 - (c_2 / \tilde{d_2}) 0 \dots & 0 \\
+%%	\end{bmatrix}
+\end{align*}
+The altered second row is subsequently used to eliminate below-diagonal terms in the row
+below it until the solution for the $n^{\mathrm{th}}$ unknown is found. The
+result may then be backsubstituted to solve for the rest of the unknowns.
+Following this procedure, the diagonal elements are modified in the foward
+substituion according to the formula
+
+\begin{equation*}
+	\tilde{d_i} = d_i - \frac{a_{i-1} c_{i-1}}{\tilde{d}_{i-1}}
+\end{equation*}
+and the right hand side elements are modified according to
+
+\begin{equation*}
+	\tilde{f_i} = f_i - \tilde{f}_{i-1} \frac{c_{i-1}}{\tilde{d}_{i-1}}
+\end{equation*}
+
+Reducing the matrix in this way gives
+
+\begin{equation*}
+	u_n = \frac{\tilde{f}_n}{\tilde{d}_n}
+\end{equation*}
+for the last unknown. The form for the backwards substition to determine the
+rest of the unknowns it
+
+\begin{equation*}
+	u _i = \frac{\tilde{f}_i - a_i u_{i+1}}{\tilde{d}_i}
+\end{equation*}
+
+These three calculations must be made $n-1$ times to solve the problem. Considering
+that there are three floating point operations (1 multiplication, 1 division,
+1 subtraction) per calculation, we note that the compuatational requirements
+for implementing this algorithm scale with the number of grid points $n$ as $9(n-1)$.
+
+\subsection*{The Specialized Algorithm}
+
+The procedure outlined above can be optimized by taking advantage of the form that
+the matrix takes for the specific case of solving Poisson's equation
+using the three-point formula. Since the tridiagonal matrix has 2 for all main
+diagonal elements and $-1$ for all 1-off diagonal elements, we can make two
+simplifications to the algorithm. First, we can precalculate the $\tilde{d}_i$
+elements by noting that they are given by $(i+1)/i$. Second, we can substitute -1
+in for the $a_i$ and $c_i$ elements. With these simplifications, the forward
+substitution calculation reduces to
+
+\begin{equation*}
+	\tilde{f}_i = f_i + \frac{ \tilde{f}_{i-1}}{\tilde{d}_{i-1}}
+\end{equation*}
+and the backward substitution reduces to
+
+\begin{equation*}
+	u_i = \frac{ \tilde{f}_i + u_{i+1}} {\tilde{d}_i}
+\end{equation*}
+This streamlined algorithm requires 4 floating point operations per grid point.
 
 \subsection*{LU Decomposition}
+
+Another way to implement the Gaussian elimination is the LU Decomposition method.
+This method involves decomposing our matrix $\mathbf{A}$ into a product of two
+matrices: one with 1s on the main diagonal and nonzero elements only below the
+main diagonal and a second matrix with nonzero elements only above the main
+diagonal. This decomposition allows us to write our matrix equation in the form
+
+\begin{equation*}
+	\mathbf{A u} = \mathbf{LU u} = \mathbf{f}
+\end{equation*}
+which can be solved in two steps
+
+\begin{equation*}
+	\mathbf{U u} = \mathbf{y}; \hspace{0.5cm} \mathbf{L y} = \mathbf{f}
+\end{equation*}
+
+By construction the matrix $\mathbf{L}$ has an inverse (since its determinant
+is equal to 1) that we can use to obtain
+
+\begin{equation*}
+	\mathbf{L}^{-1} \mathbf{u} = \mathbf{y}
+\end{equation*}
+The algorithms necessary to LU Decompose $\mathbf{A}$ are discussed in detail
+in \citep{Morten} and \citep{Golub1996}. It can be shown that this process
+requires on the order of $2/3 n^3$ floating point operations.
+
+\section{Methods}
+
+\subsection{Execution time}
+
+We applied each of the procedures discussed in the previous section to solve
+Poisson's equation. Table~\ref{tab:speedresults} compares the execution time
+as a function of number of grid points for each algorithm.
+
+\begin{table}
+\centering
+	\begin{tabular}{ c | c c c }
+	 & \multicolumn{3}{c}{Time}\\
+	$n$ & General & Specialized & LU Decomp\\
+\hline
+	10   & & & \\
+	100  & & & \\
+	1000 & & & \\
+\hline
+	\end{tabular}
+	\caption{Summary of execution times for the algorithms used.}
+	\label{tab:speedresults}
+\end{table}
+
+\subsection{Comparison to exact result}
+
+For this project, we assume the source term $f(x) = 100 e ^{-10x}$.
+This allows the solution to the differential equation to obtained as
+$u(x) = 1 - (1 - e^{-10})x - e^{-10x}$. Direct substituion back into
+the DE confirms that this is indeed the correct solution.
+
+\begin{equation*}
+	- u''(x) = - (-100 e^{-10x}) = 100 e^{-10x}
+\end{equation*}
+
+We can then compare the results of our numerical solutions directly
+to the analytic results. Figure~\ref{fig:compexact} plots the results
+of the generalized algorithm compared to the exact solution.
+
+\begin{figure}
+\centering
+	\includegraphics{figures/sols.pdf}
+	\caption{A comparison of the results from the numerical solution
+	(with various choices for the number of grid points) to the exact
+	result. The blue curve plots the numerical result with 10 grid
+	points, the green curve uses 100 grid points and the red curve
+	uses 1000 grid points. The black curve plots the exact result.
+	Good agreement with the exact result is obtained once 100 grid
+	points are used.}
+	\label{fig:compexact}
+\end{figure}
 
 \section{Results and discussions}
 
@@ -128,7 +269,9 @@ tridiagonal matrix:
 \section{Conclusions}
 
 \begin{thebibliography}{99}
-\bibitem{miller2006} G.~A.~Miller, A.~K.~Opper, and E.~J.~Stephenson, Annu.~Rev.~Nucl.~Sci.~{\bf 56}, 253 (2006).
+%\bibitem{miller2006} G.~A.~Miller, A.~K.~Opper, and E.~J.~Stephenson, Annu.~Rev.~Nucl.~Sci.~{\bf 56}, 253 (2006).
+\bibitem{Morten} M. Hjorth-Jensen, Computational Physics Lecture Notes Fall 2015, August 2015.
+\bibitem{Golub1996} G. Golub, C. Van Loan, \textit{Matrix Computations} (John Hopkins University Press, 1996)
 \end{thebibliography}
 
 \end{document}
