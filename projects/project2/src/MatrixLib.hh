@@ -98,8 +98,8 @@ void FileMatrix(string filename,double ** Matrix, int n){
   for(int i=0;i < n;i++){
     fprintf(ofile,"\n");
      for (int j=0 ; j < n;j++){
-//        fprintf(ofile,"  A[%2d][%2d] = %8.2E",i, j, Matrix[i][j]);
-        fprintf(ofile," %8.2E",Matrix[i][j]);
+        //fprintf(ofile,"  A[%2d][%2d] = %8.2E",i, j, Matrix[i][j]);
+        fprintf(ofile,"  %8.2E",Matrix[i][j]);
      }
   }
     fprintf(ofile,"\n");
