@@ -17,6 +17,7 @@ void DeallocateMatrix(double **, int, int);
 void MatrixInverse(double **, int);
 void WriteMatrix(double **, int);
 void FileMatrix(string,double **, int);
+void ReadMatrix(string,double **, int);
 void MatrixMultiplication(double **, double **, int);
 void LUDecomposition(double **, int, int *);
 void LUBackwardSubstitution(double **, int, int *, double *);
@@ -85,10 +86,32 @@ void WriteMatrix(double ** Matrix, int n){
   for(int i=0;i < n;i++){
     cout << endl;
      for (int j=0 ; j < n;j++){
-        printf("  A[%2d][%2d] = %12.4E",i, j, Matrix[i][j]);
+        printf("  A[%2d][%2d] = %8.2E",i, j, Matrix[i][j]);
      }
   }
     cout << endl;
+}
+// Read a small square matrix from file
+// file - location of file
+// **M  - matrix
+// n    - size
+void ReadMatrix(string file, double ** M, int n)
+{
+    ifstream fin(file.c_str());
+
+    if(!fin)
+    {
+        cout << "Cannot open file." << endl;
+        return;
+    }
+    for(int i=0;i<n;i++)
+    {
+        for(int j=0;j<n;j++)
+        {
+            fin >> M[i][j];
+        }
+    }
+    fin.close();
 }
 // Write out a given matrix to a file
 void FileMatrix(string filename,double ** Matrix, int n){

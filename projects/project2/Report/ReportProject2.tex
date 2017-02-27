@@ -1,0 +1,322 @@
+\documentclass[10pt,showpacs,preprintnumbers,footinbib,amsmath,amssymb,aps,prl,twocolumn,groupedaddress,superscriptaddress,showkeys]{revtex4-1}
+\usepackage{graphicx}
+\usepackage{dcolumn}
+\usepackage{bm}
+\usepackage[colorlinks=true,urlcolor=blue,citecolor=blue]{hyperref}
+\usepackage{color}
+
+\newcommand{\costa}[1]{% \costa{<power>}
+	\ensuremath{\cos ^{#1} {\theta}} }
+\newcommand{\sinta}[1]{% \sinta{<power>}
+	\ensuremath{\sin ^{#1} {\theta}} }
+\newcommand{\pwrten}[1]{%\pwrten{<power>}
+	\ensuremath{10^{#1}} }
+\newcommand{\rhomax}{
+	\ensuremath{ \rho _{\mathrm{max}}} }
+
+\begin{document}
+\title{Project 2}
+\author{Thomas Redpath}
+\affiliation{Department of Physics, Michigan State University, Outer Space}
+\begin{abstract}
+We present our Ferrari algorithm for solving linear equations. Our best algorithm runs as $4n$ FLOPS with $n$ the dimensionality of the matrix.
+\end{abstract}
+\maketitle
+
+\section{Introduction}
+
+In this project we solve Schr\"{o}edinger's equation for two electrons
+in a spherically symmetric 3D harmonic oscillator (HO) potential first
+without then including the Coulomb interaction. We proceed by
+discretizing the radial Schr\"{o}edinger equation to cast it as an
+eigenvalue problem. We then employ Jacobi's method to diagonalize
+and obtain the eigenvalues and eigenvectors.
+
+\section{Theory}
+
+First, consider the radial part of Schr\"{o}edinger's equation for a
+single electron with a HO potential given by $V(r) = 1/2 kr^2$
+where $k = m \omega^2$
+
+\begin{equation*}
+  -\frac{\hbar^2}{2 m} \left ( \frac{1}{r^2} \frac{d}{dr} r^2
+  \frac{d}{dr} - \frac{l (l + 1)}{r^2} \right )R(r) 
+     + V(r) R(r) = E R(r).
+\end{equation*}
+The energy eigenvalues are given by
+
+\begin{equation*}
+E_{nl}=  \hbar \omega \left(2n+l+\frac{3}{2}\right),
+\end{equation*}
+with $n=0,1,2,\dots$ and $l=0,1,2,\dots$, where $n$ and $l$
+are the principle angular momentum quantum numbers
+respectively.
+
+With the substitution $R(r) = (1/r) u(r)$, the dimensionless variable
+$\rho = (1/ \alpha) r$ and taking $l=0$ we obtain
+
+\begin{equation*}
+  -\frac{d^2}{d\rho^2} u(\rho) 
+       + \frac{mk}{\hbar^2} \alpha^4\rho^2u(\rho)  = \frac{2m\alpha^2}{\hbar^2}E u(\rho) .
+\end{equation*}
+where $\alpha$ is a constant with dimension length.
+
+Fixing $\alpha$ such that
+
+\begin{equation*}
+\frac{mk}{\hbar^2} \alpha^4 = 1 \Rightarrow \alpha = \left(\frac{\hbar^2}{mk}\right)^{1/4}
+\end{equation*}
+and defining
+
+\begin{equation*}
+\lambda = \frac{2m\alpha^2}{\hbar^2}E,
+\end{equation*}
+we can rewrite Schr\"{o}edinger's equation as
+
+\begin{equation*}
+  -\frac{d^2}{d\rho^2} u(\rho) + \rho^2u(\rho)  = \lambda u(\rho) .
+\end{equation*}
+In 3D with $l=0$, the eigenvalues are
+$\lambda_0=3,\lambda_1=7,\lambda_2=11,\dots .$
+
+It is now straightforward to see how this equation can be solved numerically using the standard
+numerical second derivative
+
+\begin{equation}
+    u''=\frac{u(\rho+h) -2u(\rho) +u(\rho-h)}{h^2} +O(h^2),
+    \label{eq:diffoperation}
+\end{equation}
+with $N$ grid points and the step size $h = (\rho _N - \rho _0) / N$ where $\rho_0, \rho_N$
+are the maximum and minimum values chosen for the grid. The value of $\rho$ at the
+$i^{\mathrm{th}$ grid point is then $\rho _i = \rho _0 + ih; i = 1,2,\dots,N$.
+
+In the compact ``discretized notation,'' Sch\"{o}dinger's equation becomes
+
+\begin{equation*}
+-\frac{u_{i+1} -2u_i +u_{i-1}}{h^2}+\rho_i^2u_i = \lambda u_i.
+\end{equation*}
+Representing the diagonal matrix elements as
+
+\begin{equation*}
+   d_i=\frac{2}{h^2}+V_i,
+\end{equation*}
+and the non-diagonal matrix element
+\begin{equation*}
+   e_i=-\frac{1}{h^2}.
+\end{equation*}
+we arrive at a matrix eigenvalue equation representation of the problem
+
+\begin{equation*}
+    \begin{bmatrix}d_0 & e_0 & 0   & 0    & \dots  &0     & 0 \\
+                                e_1 & d_1 & e_1 & 0    & \dots  &0     &0 \\
+                                0   & e_2 & d_2 & e_2  &0       &\dots & 0\\
+                                \dots  & \dots & \dots & \dots  &\dots      &\dots & \dots\\
+                                0   & \dots & \dots & \dots  &\dots  e_{N-1}     &d_{N-1} & e_{N-1}\\
+                                0   & \dots & \dots & \dots  &\dots       &e_{N} & d_{N}
+             \end{bmatrix}  \begin{bmatrix} u_{0} \\
+                                                              u_{1} \\
+                                                              \dots\\ \dots\\ \dots\\
+                                                              u_{N}
+             \end{bmatrix}=\lambda \begin{bmatrix} u_{0} \\
+                                                              u_{1} \\
+                                                              \dots\\ \dots\\ \dots\\
+                                                              u_{N}
+             \end{bmatrix}.  
+%      \label{eq:sematrix}
+\end{equation*}
+
+\subsection{Unitary transformations preserve orthogonality}
+
+Consider a basis of vectors $\mathbf{v}_i$,
+\[
+\mathbf{v}_i = \begin{bmatrix} v_{i1} \\ \dots \\ \dots \\v_{in} \end{bmatrix}
+\]
+We assume that the basis is orthogonal, that is 
+\[
+\mathbf{v}_j^T\mathbf{v}_i = \delta_{ij}.
+\]
+Now consider a set of vectors $\mathbf{w}_i$ derived from applying an orthogonal
+transformation to the original vectors $\mathbf{v}_i$
+\[
+\mathbf{w}_i=\mathbf{S}\mathbf{v}_i,
+\]
+The dot product between two transformed vectors is preserved due to the
+property $\mathbf{S}^T \mathbf{S} = \mathbf{I}$ of orthogonal matrices
+or $\mathbf{U} ^\dagger \mathbf{U} = \mathbf{I}$ of unitary matrices.
+So, the transformed vectors are orthogonal like the original vectors.
+\begin{align*}
+\mathbf{w}_j^T\mathbf{w}_i &= (\mathbf{S} \mathbf{v}_j)^T (\mathbf{S}\mathbf{v}_i)\\
+	&= \mathbf{v}_j ^T \mathbf{S}^T \mathbf{S} \mathbf{v}_i\\
+	&= \mathbf{v}_j ^T \mathbf{v}_i\\
+	&= \delta_{ij}.
+\end{align*}
+
+\section{Algorithms and methods}
+
+To solve the matrix eigenvalue problem, we applied Jacobi's method within a
+C++ program to diagonalize the $N \times N$ matrix.
+
+\subsection{Jacobi's Method}
+
+Jacobi's method involves applying a series of similarity transformations
+to bring the original symmetric tridiagonal matrix to a diagonal one. At the end
+of this process, we obtain the eigenvalues and eigenvectors. The similarity
+transformation can be interpreted geometrically as a rotation
+about an angle $\theta$ in the n-dimensional Euclidean space. We denote
+such a transformation of the matrix $\mathbf{A}$ into the matrix
+$\mathbf{B}$ as
+
+\begin{equation*}
+	\mathbf{B} = \mathbf{S} ^T \mathbf{A} \mathbf{S}.
+\end{equation*}
+where $\mathbf{S}$ has the form
+
+\begin{equation*}
+	\mathbf{S} = 
+	\begin{bmatrix}1 & 0 & \dots   & 0    & 0  & \dots  & 0 & 0 \\
+                                0 & 1 & \dots & 0    & 0  & \dots     &0 & 0 \\
+			\dots & \dots & \dots & \dots & \dots & \dots & \dots & \dots\\
+                                0 & 0 & \dots & \costa{}  & 0   & \dots & 0 & \sinta{} \\
+			0 & 0 & \dots & 0 & 1 & \dots & 0 & 0 \\
+			\dots & \dots & \dots & \dots & \dots & \dots & \dots & \dots\\
+                                0   & 0 & \dots & 0  & 0  \dots  & 1 & 0\\
+                                0   & 0 & \dots & - \sinta{}  &\dots & \dots & 0 & \costa{}
+	\end{bmatrix}
+	.
+\end{equation*}
+The resulting matrix elements are
+
+\begin{align*}
+	b _{ii}  &= a _{ii}, i \neq k, i \neq l\\
+	b _{ik} &= a _{ik} \cos{\theta} - a _{il} \sin{\theta}, i \neq k, i \neq l\\
+	b _{il}  &= a _{il} \cos{\theta} + a _{ik} \sin{\theta}, i \neq k, i \neq l\\
+	b _{kk} &= a _{kk} \costa{2} - 2 a_{kl} \costa{} \sinta{} + a _{ll} \sinta{2}\\
+	b _{ll}  &= a _{ll} \costa{2} + 2 a _{al} \costa{} \sinta{} + a _{kk} \sinta{2}\\
+	b _{kl} &= (a _{kk} - a _{ll} ) \costa{} \sinta{} + a _{kl} (\costa{2} - \sinta{2} )
+\end{align*}
+where $\theta$ for each transformation is chosen such that the off diagonal $b _{kl}$
+is zero. We re-write this condition with the abbreviations $t = \tan{\theta}$ and the
+definition
+
+\begin{equation*}
+	\tau = \frac{a _{ll} - a _{kk}}{2 a _{kl}}
+\end{equation*}
+as
+
+\begin{equation*}
+	t ^2  + 2 \tau t - 1 = 0
+\end{equation*}
+which has solutions
+
+\begin{equation*}
+	t = - \tau \pm \sqrt{1 + \tau ^2}.
+\end{equation*}
+Now, from $\costa{2} + \sinta{2} = 1$ we can write
+
+\begin{equation*}
+	\costa{} = \frac{1}{ \sqrt{1 + t ^2}}
+\end{equation*}
+from which we can get $\sinta{} = t \costa{}$.
+
+With this procedure for zeroing an off-diagonal matrix element, we can generate
+a recipe for iteratively diagonalizing any symmetric matrix:
+
+\begin{enumerate}
+	\item Set some numerical limit that determines when the matrix elements
+	are small enough to be effectively zero (e.g. \pwrten{-8})
+	\item Find the largest matrix element
+	\item Compute $\tau,t,\costa{},\sinta{}$ that will zero this matrix element
+	\item Apply the similarity transformation defined in the previous step to the
+	matrix to obtain a transformed matrix
+	\item Repeat the previous three steps until all matrix elements are less than
+	the limit set in the first step
+\end{enumerate}
+
+\subsection{Implementing Jacobi's method}
+
+We implemented Jacobi's method in a C++ function that performs the steps listed
+in the previous section. This function sets the limit from step one in the previous
+section to \pwrten{-8} as well as a limit on the maximum number of iterations ($n^3$,
+where $n$ is the dimensionality of the matrix) in case the off-diagonal limit
+isn't satisfied. We then, loop until one of these conditions is met. For each iteration,
+the function \texttt{FindMaxOffDiag} searches the current version of the matrix for
+the largest off diagonal matrix and \texttt{Rotate} computes $\theta$ then applies
+similarity transformation. The similarity transformation of each iteration is also applied
+to a second $N \times N$ matrix that was initialized to the identity. This allows us to
+obtain the eigenvectors. After the loop is complete, the original tridiagonal matrix
+has been transformed into a diagonal matrix with the eigenvalues along the main
+diagonal. One final loop over the main diagonal is performed to find the lowest
+eigenvalue which is printed out along with its index. We use the index to extract
+the corresponding eigenvector from the eigenvector matrix.
+
+
+ 
+\section{Unit Tests}
+this may be a subsection under Methods
+
+
+\section{Results and discussions}
+
+\subsection{The non-interacting case}
+
+We tested how many grid points and what values for \rhomax give
+the correct results for the lowest three eigenvalues to four decimal places.
+The results are summarized in Table~\ref{tab:NRhoResults}. A
+$\rhomax = 5$ appears to be large enough to produce correct predictions
+for the first three eigenvalues. In order to attain the desired four decimal
+place precision, we increased the number of grid points to 500. In general,
+both \rhomax and the number of grid points contribute to the accuracy of
+the numerical eigenvalues since together they determine the how close
+the calculation approaches the continuous case. To accurately reproduce
+the higher
+eigenenergies, we need a larger \rhomax to ensure that the boundary
+condition $u(\rhomax)=0$ is satisfied for the more extended
+wavefunctions. If we only care about the the
+lowest eigenenergies, we can keep \rhomax small for the same number
+of grid points and achieve a better approximation.
+
+\begin{table}
+\centering
+	\begin{tabular}{ c c | c c c | c }
+	 & & \multicolumn{3}{c}{$2 E_i = 4i + 3$} &\\
+\hline
+%	 &  & $2E_1$ & $2E_2$ & $2E_3$ &\\
+	 & & 3 & 7 & 11 & \\
+\hline
+	\multicolumn{6}{c}{Numerical Results}\\
+\hline
+	$N$ & \rhomax & $2E_1$ & $2E_2$ & $2E_3$ & \# iterations\\
+\hline
+	50 & 5 & 2.996871 & 6.984340 & 10.961832 & 4047\\
+	100 & 5 & 2.999219 & 6.996093 & 10.990595 & 16532\\
+	200 & 5 & 2.999805 & 6.999025 & 10.997780 & 66618\\
+	500 & 5 & 2.999969 & 6.999846 & 10.999802 & 421903\\
+\hline
+	50   & 10 & 2.987443 & 6.936917 & 10.845289 & 3681\\
+	100 & 10 & 2.996871 & 6.984339 & 10.961741 & 15522\\
+	200 & 10 & 2.999219 & 6.996092 & 10.990460 & 64026\\
+\hline
+	50   & 15 & 2.971582 & 6.856332 & 10.645120 & 2718\\
+	100 & 15 & 2.992951 & 6.964661 & 10.913531 & 14312\\
+	200 & 15 & 2.998241 & 6.991200 & 10.978512 & 61378\\
+	\end{tabular}
+	\caption{Lowest three eigenvalues for different values of
+	$N$ and \rhomax. The first two lines give the analytic
+	formula and the corresponding values for the first three
+	eigenenergies of the harmonic oscillator potential.}
+	\label{tab:NRhoResults}
+\end{table}
+
+%\begin{figure}[hbtp]
+%\includegraphics[scale=0.4]{test1.pdf}
+%\caption{Exact and numerial solutions for $n=10$ mesh points.} 
+%\label{fig:n10points}
+%\end{figure}
+
+\section{Conclusions}
+
+\begin{thebibliography}{99}
+%%\bibitem{miller2006} G.~A.~Miller, A.~K.~Opper, and E.~J.~Stephenson, Annu.~Rev.~Nucl.~Sci.~{\bf 56}, 253 (2006).
+\end{thebibliography}
+
+\end{document}
