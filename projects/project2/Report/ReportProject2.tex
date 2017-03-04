@@ -4,6 +4,7 @@
 \usepackage{bm}
 \usepackage[colorlinks=true,urlcolor=blue,citecolor=blue]{hyperref}
 \usepackage{color}
+\usepackage{amsmath}
 
 \newcommand{\costa}[1]{% \costa{<power>}
 	\ensuremath{\cos ^{#1} {\theta}} }
@@ -73,9 +74,10 @@ and defining
 \end{equation*}
 we can rewrite Schr\"{o}edinger's equation as
 
-\begin{equation*}
+\begin{equation}
   -\frac{d^2}{d\rho^2} u(\rho) + \rho^2u(\rho)  = \lambda u(\rho) .
-\end{equation*}
+\label{eq:1bseq}
+\end{equation}
 In 3D with $l=0$, the eigenvalues are
 $\lambda_0=3,\lambda_1=7,\lambda_2=11,\dots .$
 
@@ -125,9 +127,78 @@ we arrive at a matrix eigenvalue equation representation of the problem
 %      \label{eq:sematrix}
 \end{equation*}
 
+To account for the Coulomb interaction between two electons, it is convenient to
+introduce a change of coordinates (eq.~\ref{eq:changecoordinates}) that allows
+us to separates the Schr\"{o}dinger
+equation into two parts, one that describes the center of mass ($R$) of the two-body
+system and one that describes the interaction of the two electrons ($r$).
+
+\begin{align}\label{eq:changecoordinates}
+\begin{split}
+	r &= r_1 - r_2\\
+	R &= \frac{1}{2} r_1 + r_2
+\end{split}
+\end{align}
+With this change of coordinates, we may re-write the two-body Schr\"{o}dinger
+equation
+
+\begin{align*}
+\left(  -\frac{\hbar^2}{2 m} \frac{d^2}{dr_1^2} -\frac{\hbar^2}{2 m} \frac{d^2}{dr_2^2}+ \frac{1}{2}k r_1^2+ \frac{1}{2}k r_2^2\right)u(r_1,r_2) \\
+ = E^{(2)} u(r_1,r_2)
+\end{align*}
+as
+
+\begin{align*}
+\left(  -\frac{\hbar^2}{m} \frac{d^2}{dr^2} -\frac{\hbar^2}{4 m} \frac{d^2}{dR^2}+ \frac{1}{4} k r^2+  kR^2\right)u(r,R)\\
+= E^{(2)} u(r,R)
+\end{align*}
+(see Appendix) and the ansatz for the wavefunction $\Psi(r,R) = \psi(r) \phi(R)$
+allows us to separate the wavefunction such that the two-body eigenenergies
+are a sum of the center of mass and interaction energies $E ^{(2)} = E _R + E_r$.
+With the form of the Coulomb interaction between two electrons
+
+\begin{equation*}
+V(r_1,r_2) = \frac{\beta e^2}{|\mathbf{r}_1-\mathbf{r}_2|}=\frac{\beta e^2}{r},
+\end{equation*}
+ $\beta e^2=1.44$ eVnm, and the dimensionless variable $\rho = r/\alpha$ the
+Schr\"{o}dinger equation becomes
+
+\begin{equation*}
+  -\frac{d^2}{d\rho^2} \psi(\rho) 
+       + \frac{1}{4}\frac{mk}{\hbar^2} \alpha^4\rho^2\psi(\rho)+\frac{m\alpha \beta e^2}{\rho\hbar^2}\psi(\rho)  = 
+\frac{m\alpha^2}{\hbar^2}E_r \psi(\rho) .
+\end{equation*}
+By defining an ``effective'' oscillator frequency
+
+\begin{equation*}
+\omega_r^2=\frac{1}{4}\frac{mk}{\hbar^2} \alpha^4,
+\end{equation*}
+fixing $\alpha$ such that
+
+\begin{equation*}
+\frac{m\alpha \beta e^2}{\hbar^2}=1 \Rightarrow \alpha = \frac{\hbar^2}{m\beta e^2}
+\end{equation*}
+and letting
+
+\begin{equation*}
+\lambda = \frac{m\alpha^2}{\hbar^2}E,
+\end{equation*}
+the Schr\"{o}dinger equation becomes
+
+\begin{equation*}
+  -\frac{d^2}{d\rho^2} \psi(\rho) + \omega_r^2\rho^2\psi(\rho) +\frac{1}{\rho} = \lambda \psi(\rho).
+\end{equation*}
+which has a similar form to eq.~\ref{eq:1bseq}. The same discretization treatment
+described above can be applied to this equation to arrive at the same matrix
+eigenvalue equation as before, just with a different potential. Namely, the
+$V_i$ term in the diagonal matrix elements becomes $\omega_r ^2 \rho + 1/\rho$
+instead of $\rho ^2$.
+
+
+
 \subsection{Unitary transformations preserve orthogonality}
 
-Consider a basis of vectors $\mathbf{v}_i$,
+Consider a set of vectors $\mathbf{v}_i$ that form an orthonormal basis,
 \[
 \mathbf{v}_i = \begin{bmatrix} v_{i1} \\ \dots \\ \dots \\v_{in} \end{bmatrix}
 \]
@@ -154,7 +225,11 @@ So, the transformed vectors are orthogonal like the original vectors.
 \section{Algorithms and methods}
 
 To solve the matrix eigenvalue problem, we applied Jacobi's method within a
-C++ program to diagonalize the $N \times N$ matrix.
+C++ program to diagonalize the $N \times N$ matrix. The source code developed
+for this project is available at \url{https://github.com/redpath11/phy905_thr}.
+The directory \texttt{projects/project2/} inside that repository contains the
+source code described below. All file paths given here are relative to that
+directory of the git repository.
 
 \subsection{Jacobi's Method}
 
@@ -251,8 +326,41 @@ the corresponding eigenvector from the eigenvector matrix.
 
 
  
-\section{Unit Tests}
-this may be a subsection under Methods
+\subsection{Unit Tests}
+During development of our code, we implemented a series of unit tests to verify that
+we were coding the algorithm correctly. The first test was to ensure that we setup
+the tridiagonal matrix correctly. The function \texttt{SetMatrix} generates a matrix
+of the specified dimension and \rhomax. We wrote this matrix out to a file
+\texttt{Benchmark/test0.out} that was used as input to a Python script that employs
+the \texttt{numpy.linalg.eigvals} solver to find the eigenvalues. In this way, we verified
+that the non-interacting matrix was being properly set up by checking that the lowest
+eigenvalues were approximately the analytic HO eigenvalues (3,7,11,15,...). This test
+was implemented via the \texttt{test0} function in \texttt{src/proj2.cc}.
+
+The second test checked that the search for the largest off-diagonal matrix element
+works properly. In this simple test, we set up a $4 \times 4$ matrix and initialize a
+few of the off-diagonal elements to random values. We then run the \texttt{FindMaxOffDiag}
+function on this matrix and ensure that it returns the proper element. Furthermore, we
+checked that the larget off-diagonal element was chosen based on the absolute value
+of the element. This test was coded in the \texttt{test1} function in \texttt{src/proj2.cc}.
+
+Our third unit test checked the Jacobi solver results against the output from 
+\texttt{numpy.linalg.eigvals} for simple $3 \times 3$ and $4 \times 4$ matrices stored in the
+files \texttt{Benchmark/test2\_3.in} and \texttt{Benchmark/test2\_4.in} respectively. The
+function \texttt{test2} in \texttt{src/proj2.cc} reads in one of these matrices, applys the
+Jacobi algorithm and checks that the eigenvectors are orthogonal.
+
+The next test we performed checked that our code calculates eigenfunctions that make
+sense physically. We ran the Jacobi algorithm with 50 gridpoints and $\rhomax=5$ to
+check the behavior the first three eigenfuctions - see FIG.~\ref{fig:NIwvfn}.
+
+\begin{figure}
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/NIwvfn.pdf}
+	\caption{The square of the ground state (blue) and first two excited state (red and
+	green) wavefunctions.}
+	\label{fig:NIwvfn}
+\end{figure}
 
 
 \section{Results and discussions}
@@ -273,7 +381,10 @@ eigenenergies, we need a larger \rhomax to ensure that the boundary
 condition $u(\rhomax)=0$ is satisfied for the more extended
 wavefunctions. If we only care about the the
 lowest eigenenergies, we can keep \rhomax small for the same number
-of grid points and achieve a better approximation.
+of grid points and achieve a better approximation to the continuous
+case.
+
+%% Compare Jacobi solver to python implementation run times %%
 
 \begin{table}
 \centering
@@ -287,7 +398,8 @@ of grid points and achieve a better approximation.
 \hline
 	$N$ & \rhomax & $2E_1$ & $2E_2$ & $2E_3$ & \# iterations\\
 \hline
-	50 & 5 & 2.996871 & 6.984340 & 10.961832 & 4047\\
+	20  & 5  & 2.980329 & 6.900902 & 10.752631 & 609\\
+	50  & 5  & 2.996871 & 6.984340 & 10.961832 & 4047\\
 	100 & 5 & 2.999219 & 6.996093 & 10.990595 & 16532\\
 	200 & 5 & 2.999805 & 6.999025 & 10.997780 & 66618\\
 	500 & 5 & 2.999969 & 6.999846 & 10.999802 & 421903\\
@@ -306,6 +418,16 @@ of grid points and achieve a better approximation.
 	eigenenergies of the harmonic oscillator potential.}
 	\label{tab:NRhoResults}
 \end{table}
+
+\begin{figure}
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/dnit.pdf}
+	\caption{The number of similarity transformations need to
+	diagonalized the matrix is plotted against the matrix
+	dimensionality. Note the general $N^2$ dependence of
+	the number of iterations.}
+	\label{fig:dnit}
+\end{figure}
 
 %\begin{figure}[hbtp]
 %\includegraphics[scale=0.4]{test1.pdf}

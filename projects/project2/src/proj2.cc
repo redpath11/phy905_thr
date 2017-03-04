@@ -12,7 +12,7 @@
 using namespace std;
 
 /* Global w^2 declaration */
-const double w2 = 1.0;
+const double w2 = 1.0*1.0;
 
 /* Function Declarations */
 inline double Potential(double );
@@ -20,44 +20,31 @@ void test0(int ,double );// test building matrix
 void test1();// test FindMaxOffDiag finder
 void test2();// test Jacobi algorithm matrix w/ known e.values/vectors
 void test3(int ,double );// test with the noninteracting case
+void SetMatrix(double **,int ,double);
 void jacobi(double **M,double **R,int n);
 double FindMaxOffDiag(double **M, int *k, int *l, int n);
 void Rotate(double **,double **,int ,int, int );
 void TestOrthogonality(double **,int);
-void PrintLowestEvalues(double ** ,int ,int );
+int * PrintLowestEvalues(double ** ,int ,int );
+void WriteEigenvector(double **,int ,int );
 
 
 /* Function Definitinos */
 int main()
 {
-//    test0(100,15.);
+//    test0(100,5.);
 //    test1();
 //    test2();
-    test3(500,5.);
+    test3(50,5.);
     return 0;
 }
 
 // test setting up the matrix
 void test0(int n,double rmax)
 {
-    // set step size
-    double h  = rmax/n;
-    double hh = h*h;
-    /* set up matrix */
-    // precalculate stuff
-    double ei = (-1.)/hh;
-    double d  = (2.)/hh;
     // allocate matrix and set matrix elements
     double **M = AllocateMatrix(n,n);
-    for(int i=1;i<n;i++)
-    {
-        int idx   = i-1;
-        M[idx][idx]   = d + Potential(i*h);
-        M[idx+1][idx] = ei;
-        M[idx][idx+1] = ei;
-    }
-    // handle the last diagonal element ... this might be wrong ...
-    M[n-1][n-1] = d + Potential(rmax);
+    SetMatrix(M,n,rmax);
 
     // file matrix to test in Python
     FileMatrix("../Benchmark/test0.out",M,n);
@@ -71,7 +58,8 @@ void test1()
     int n=4;
     int kk,ll;
     double **M = AllocateMatrix(n,n);
-    M[2][1]=10.;M[1][3]=-16.4;M[1][3]=56.2;
+//    M[2][1]=10.;M[2][3]=-16.4;M[1][3]=56.2;
+    M[2][1]=10.;M[2][3]=-16.4;M[1][3]=-56.2;
     double max = FindMaxOffDiag(M,&kk,&ll,n);
     FileMatrix("../Benchmark/test1.out",M,n);
     DeallocateMatrix(M,n,n);
@@ -83,19 +71,28 @@ void test1()
 
 void test2()
 {
-    int n=4;
+    int n=3;
     double ** M = AllocateMatrix(n,n);
     double ** E = AllocateMatrix(n,n);
     for(int i=0;i<n;i++)
     {
         E[i][i]=1.0;
     }
-    ReadMatrix("../Benchmark/test2_4.in",M,n);// test 3x3
+    ReadMatrix("../Benchmark/test2_3.in",M,n);// test 3x3
     //ReadMatrix("../Benchmark/test2_4.in",M,n);// test 4x4
     WriteMatrix(M,n);
     jacobi(M,E,n);
     WriteMatrix(E,n);
     TestOrthogonality(E,n);
+    int * evidx = PrintLowestEvalues(M,n,3);
+//    cout << endl;
+//    for(int i=0;i<3;i++){cout << evidx[i] << endl;}
+    int gsIndex = evidx[0];
+//    cout << gsIndex << endl;
+    WriteEigenvector(E,n,gsIndex);
+
+    DeallocateMatrix(M,n,n);
+    DeallocateMatrix(E,n,n);
 
 }
 
@@ -103,13 +100,8 @@ void test2()
 // test with non interacting case
 void test3(int n,double rmax)
 {
-    // set step size
-    double h  = rmax/n;
-    double hh = h*h;
-    /* set up matrix */
-    // precalculate stuff
-    double ei = (-1.)/hh;
-    double d  = (2.)/hh;
+    // For timing ...
+    clock_t start,finish;
     // allocate matrix and set matrix elements
     // two matrices: one to diagonalize, one for eigenvectors
     double **M = AllocateMatrix(n,n);
@@ -120,24 +112,45 @@ void test3(int n,double rmax)
         N[i][i] = 1.0;
     }
     // generate tridiagonal matrix
-    for(int i=1;i<n;i++)
-    {
-        int idx   = i-1;
-        M[idx][idx]   = d + Potential(i*h);
-        M[idx+1][idx] = ei;
-        M[idx][idx+1] = ei;
-    }
-    // handle the last diagonal element ... this might be wrong ...
-    M[n-1][n-1] = d + Potential(rmax);
+    SetMatrix(M,n,rmax);
 
+    start = clock();
     jacobi(M,N,n);
+    finish = clock();
+    cout << fixed << setprecision(3) << "CPU time used: "
+    <<(finish - start)/((double)CLOCKS_PER_SEC)
+    << " s" << endl;
 
-    FileMatrix("efnts.out",N,n);
+//    FileMatrix("efnts.out",N,n);
+    int * evidx = PrintLowestEvalues(M,n,3);
+    int gsIndex = evidx[0];
+    WriteEigenvector(N,n,gsIndex);
     DeallocateMatrix(M,n,n);
     DeallocateMatrix(N,n,n);
 
 }
 
+void SetMatrix(double **MM,int n,double rm)
+{
+    // set step size
+    double h  = rm/n;
+    double hh = h*h;
+    // precalculate stuff
+    double ei = (-1.)/hh;
+    double d  = (2.)/hh;
+
+    for(int i=1;i<n;i++)
+    {
+        int idx   = i-1;
+        MM[idx][idx]   = d + Potential(i*h);
+        MM[idx+1][idx] = ei;
+        MM[idx][idx+1] = ei;
+    }
+    // handle the last diagonal element ...
+    // in practice the boundary condition is
+    // u(rmax+h)=0
+    MM[n-1][n-1] = d + Potential(rm);
+}
 
 double FindMaxOffDiag(double **M, int *k, int *l, int n)
 {
@@ -251,14 +264,11 @@ void jacobi(double **M,double **V,int n)
     cout << "Ground State Energy: " << min << endl;
     cout << "Index of ground state: " << minelement << endl;
 */
-    PrintLowestEvalues(M,n,3);
-
-
 
 }
 
 // Find the lowest x eigenvalues
-void PrintLowestEvalues(double ** M,int nn,int x)
+int * PrintLowestEvalues(double ** M,int nn,int x)
 {
     double * eigenvalues = new double[x];
     int * index = new int[x];
@@ -291,6 +301,7 @@ void PrintLowestEvalues(double ** M,int nn,int x)
     {
         printf("%-14.6f %-14i\n",eigenvalues[i],index[i]);
     }
+    return index;
 }
 
 // Test orthogonality of eigen vectors
@@ -309,6 +320,23 @@ void TestOrthogonality(double **V,int n)
             cout << sum << endl;
         }
     }
+}
+
+void WriteEigenvector(double **Ef,int n,int idx)
+{
+    char fname[512];
+//    sprintf(fname,"../Benchmark/GSwavefunction%4.2f.out",w2);
+    sprintf(fname,"../Benchmark/wavefunction%i.out",0);
+    FILE *ofile;
+    ofile=fopen(fname,"w");
+
+
+    for(int i=0;i<n;i++)
+    {
+        fprintf(ofile," %8.2E\n",Ef[i][idx]*Ef[i][idx]);
+    }
+    fclose(ofile);
+
 }
 
 
