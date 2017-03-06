@@ -11,8 +11,9 @@
 
 using namespace std;
 
-/* Global w^2 declaration */
-const double w2 = 1.0*1.0;
+/* Global omega^2 declaration */
+const double w2[5] = {0.0001,0.25,1.0,25.0,0.01};
+const int omega_index = 1;// set which omega^2 to use
 
 /* Function Declarations */
 inline double Potential(double );
@@ -26,7 +27,7 @@ double FindMaxOffDiag(double **M, int *k, int *l, int n);
 void Rotate(double **,double **,int ,int, int );
 void TestOrthogonality(double **,int);
 int * PrintLowestEvalues(double ** ,int ,int );
-void WriteEigenvector(double **,int ,int );
+void WriteEigenvector(double **,int ,int ,double rmax);
 
 
 /* Function Definitinos */
@@ -35,7 +36,7 @@ int main()
 //    test0(100,5.);
 //    test1();
 //    test2();
-    test3(50,5.);
+    test3(100,10.);
     return 0;
 }
 
@@ -89,7 +90,7 @@ void test2()
 //    for(int i=0;i<3;i++){cout << evidx[i] << endl;}
     int gsIndex = evidx[0];
 //    cout << gsIndex << endl;
-    WriteEigenvector(E,n,gsIndex);
+    WriteEigenvector(E,n,gsIndex,1.);
 
     DeallocateMatrix(M,n,n);
     DeallocateMatrix(E,n,n);
@@ -121,10 +122,12 @@ void test3(int n,double rmax)
     <<(finish - start)/((double)CLOCKS_PER_SEC)
     << " s" << endl;
 
+//    TestOrthogonality(N,n);
+
 //    FileMatrix("efnts.out",N,n);
     int * evidx = PrintLowestEvalues(M,n,3);
     int gsIndex = evidx[0];
-    WriteEigenvector(N,n,gsIndex);
+    WriteEigenvector(N,n,gsIndex,rmax);
     DeallocateMatrix(M,n,n);
     DeallocateMatrix(N,n,n);
 
@@ -322,18 +325,20 @@ void TestOrthogonality(double **V,int n)
     }
 }
 
-void WriteEigenvector(double **Ef,int n,int idx)
+void WriteEigenvector(double **Ef,int n,int idx,double rmax)
 {
     char fname[512];
-//    sprintf(fname,"../Benchmark/GSwavefunction%4.2f.out",w2);
-    sprintf(fname,"../Benchmark/wavefunction%i.out",0);
+    sprintf(fname,"../Benchmark/GSwavefunction%4.2f.out",w2[omega_index]);
+//    sprintf(fname,"../Benchmark/wavefunction%i.out",0);
     FILE *ofile;
     ofile=fopen(fname,"w");
+
+    double h = rmax/((double)n);
 
 
     for(int i=0;i<n;i++)
     {
-        fprintf(ofile," %8.2E\n",Ef[i][idx]*Ef[i][idx]);
+        fprintf(ofile,"%16.4E %16.4E\n",((double)(i+1))*h,Ef[i][idx]*Ef[i][idx]);
     }
     fclose(ofile);
 
@@ -341,4 +346,5 @@ void WriteEigenvector(double **Ef,int n,int idx)
 
 
 //inline double Potential(double x){return x*x;}
-inline double Potential(double x){return w2*x*x;}
+//inline double Potential(double x){return w2[omega_index]*x*x;}
+inline double Potential(double x){return w2[omega_index]*x*x + 1./x;}

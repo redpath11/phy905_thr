@@ -5,6 +5,7 @@
 \usepackage[colorlinks=true,urlcolor=blue,citecolor=blue]{hyperref}
 \usepackage{color}
 \usepackage{amsmath}
+\usepackage{multirow}
 
 \newcommand{\costa}[1]{% \costa{<power>}
 	\ensuremath{\cos ^{#1} {\theta}} }
@@ -233,6 +234,11 @@ directory of the git repository.
 
 \subsection{Jacobi's Method}
 
+%It should be
+%noted that this method is not the most efficient for solving this problem, especially
+%since the matrix is already tridiagonal. It would be more computationally efficient to
+%use 
+
 Jacobi's method involves applying a series of similarity transformations
 to bring the original symmetric tridiagonal matrix to a diagonal one. At the end
 of this process, we obtain the eigenvalues and eigenvectors. The similarity
@@ -357,8 +363,8 @@ check the behavior the first three eigenfuctions - see FIG.~\ref{fig:NIwvfn}.
 \begin{figure}
 \centering
 	\includegraphics[width=0.5\textwidth]{figures/NIwvfn.pdf}
-	\caption{The square of the ground state (blue) and first two excited state (red and
-	green) wavefunctions.}
+	\caption{The square modulus of the ground state (blue) and first two excited state (red and
+	green) wavefunctions with computed with $N=50, \rhomax=5$.}
 	\label{fig:NIwvfn}
 \end{figure}
 
@@ -370,19 +376,34 @@ check the behavior the first three eigenfuctions - see FIG.~\ref{fig:NIwvfn}.
 We tested how many grid points and what values for \rhomax give
 the correct results for the lowest three eigenvalues to four decimal places.
 The results are summarized in Table~\ref{tab:NRhoResults}. A
-$\rhomax = 5$ appears to be large enough to produce correct predictions
-for the first three eigenvalues. In order to attain the desired four decimal
+$\rhomax = 5$ appears to be large enough to give correct predictions
+for the first three eigenvalues. This can also be seen in FIG.~\ref{fig:NIwvfn}
+where all three wavefunctions go to zero before \rhomax is reached.
+In order to attain the desired four-decimal
 place precision, we increased the number of grid points to 500. In general,
 both \rhomax and the number of grid points contribute to the accuracy of
 the numerical eigenvalues since together they determine the how close
-the calculation approaches the continuous case. To accurately reproduce
-the higher
+the calculation approaches the continuous case (how fine-grained the grid is).
+To accurately reproduce the higher
 eigenenergies, we need a larger \rhomax to ensure that the boundary
 condition $u(\rhomax)=0$ is satisfied for the more extended
 wavefunctions. If we only care about the the
 lowest eigenenergies, we can keep \rhomax small for the same number
 of grid points and achieve a better approximation to the continuous
 case.
+
+In TABLE~\ref{tab:w} we list the simulation parameters ($N,\rhomax$)
+and the ground state eigenenergy for different oscillator strengths ($\omega$).
+In general, the smaller ($\omega$) the shallower the oscillator potential which
+shifts the eigenenergies lower. This also makes the wavefunctions more diffuse
+and requires a larger \rhomax to ensure that the upper boundary condition is
+satisfied. We varied $N$ and \rhomax until the ground state energy converged.
+We kept $N$ at or below 250 grid points to limit the run time of the program.
+TABLE~\ref{tab:w} shows that for the shallowest oscillator potential ($\omega = 0.01$)
+a large \rhomax is needed to capture the ground state wavefunction. For the
+other three cases, $\rhomax=5$ was sufficient. The ground state wavefunctions
+with different $\omega$ are plotted in FIG.~\ref{fig:gsw}. Note that the extent of
+the ground state wavefunction increases with decreasing $\omega$.
 
 %% Compare Jacobi solver to python implementation run times %%
 
@@ -429,6 +450,44 @@ case.
 	\label{fig:dnit}
 \end{figure}
 
+\begin{table}
+\centering
+	\begin{tabular}{ c | c c c }
+	$\omega$ & $N$ & \rhomax & $E_0$\\
+\hline
+	\multirow{6}{*}{0.01} & 100 & 10 & 0.0996\\
+	        & 150 & 15 & 0.0496\\
+	        & 200 & 20 & 0.0351\\
+	        & 250 & 25 & 0.0399\\
+	        & 250 & 50 & 0.0299\\
+	        & 250 & 100&0.0299\\
+\hline
+	\multirow{4}{*}{0.25} & 100 & 10 & 1.4992\\
+				     & 150 & 15 & 1.4992\\
+				     &  50  & 5   & 1.4994\\
+				     & 250 & 5   & 1.5002\\
+\hline
+	1.0 & 100 & 10 & 2.9969\\
+\hline
+	\multirow{3}{*}{5.0} & 100 & 10 & 14.9214\\
+	      & 100 & 5   & 14.9884\\
+	      & 250 & 5   & 14.9969
+	\end{tabular}
+	\caption{Ground state eigenenergies for different combinations of
+	($N,\rhomax$) and different oscillator strengths ($\omega$) to check
+	for convergence of $E_0$ for the different $\omega$ (non-interacting case).}
+	\label{tab:w}
+\end{table}
+
+\begin{figure}
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/gsw.pdf}
+	\caption{Ground state wavefunctions for different oscillator
+	strengths. The weakest potential ($\omega = 0.01$) is shown in black and the
+	strongest potential ($\omega = 5$) is plotted in green.
+	The wavefunctions have been scaled to the $\omega = 5$ wavefunction.}
+	\label{fig:gsw}
+\end{figure}
 %\begin{figure}[hbtp]
 %\includegraphics[scale=0.4]{test1.pdf}
 %\caption{Exact and numerial solutions for $n=10$ mesh points.} 
