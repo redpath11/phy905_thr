@@ -12,7 +12,7 @@
 using namespace std;
 
 /* Global omega^2 declaration */
-const double w2[5] = {0.0001,0.25,1.0,25.0,0.01};
+const double w2[6] = {0.0001,0.25,1.0,25.0,0.0625,0.0025};
 const int omega_index = 1;// set which omega^2 to use
 
 /* Function Declarations */
@@ -315,12 +315,15 @@ void TestOrthogonality(double **V,int n)
         for(int j=i+1;j<n;j++)
         {
             double sum=0;
-            printf("Dot product of eigenvectors %i and %i:\n",i+1,j+1);
             for(int k=0;k<n;k++)
             {
                 sum+=V[k][i]*V[k][j];
             }
-            cout << sum << endl;
+            if(sum>10e-8)
+            {
+                printf("WARNING: Dot product of eigenvectors %i and %i:\n",i+1,j+1);
+                cout << sum << endl;
+            }
         }
     }
 }
