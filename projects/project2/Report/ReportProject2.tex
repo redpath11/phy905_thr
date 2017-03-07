@@ -18,11 +18,22 @@
 	\ensuremath{ \rho _{\mathrm{max}}} }
 
 \begin{document}
-\title{PHY 905 Project 2}
+\title{PHY 905 Project 2: Electrons in a harmonic oscillator potential}
 \author{Thomas Redpath}
 \affiliation{Department of Physics, Michigan State University}
 \begin{abstract}
-We present our Ferrari algorithm for solving linear equations. Our best algorithm runs as $4n$ FLOPS with $n$ the dimensionality of the matrix.
+We present our results from solving the Schr\"{o}dinger equation for two $s$-wave
+electrons confined by a harmonic oscillator potential. We first consider the
+case of non-interacting electrons then proceed to include the Coulomb
+interaction. We use Jacobi's method to solve Schr\"{o}dinger's equation
+numerically. Our results agree with the well known analytic eigenenergies
+(with $l=0$) $2E_{n0} = 3,7,11,\dots$ for the non-interacting case. With the Coulomb
+interaction, our results agree well with analytic solutions that exist for
+specific oscillator frequencies. Finally, we explore the energies and wavefunctions
+for interacting electrons with oscillator frequencies $\omega = 0.01,0.5,1.0,5.0$
+and observe how the relative distance between the electrons increases with
+increasing oscillator strength. We interpret this as an increasing influence of
+the Coulomb repulsion as the confining potential becomes more restrictive.
 \end{abstract}
 \maketitle
 
@@ -41,7 +52,7 @@ this report, we present the theoretical framework required to solve
 this problem. In the Methods section we discuss how we implemented
 the Jacobi algorithm in a C++ program. In the Results and Discussions
 section we present the ground state eigenenergies and wavefunctions
-calculated by our code for different oscillator strengths both with and
+calculated using our code for different oscillator strengths both with and
 without the Coulomb interaction.
 
 
@@ -330,13 +341,14 @@ a recipe for iteratively diagonalizing any symmetric matrix:
 
 We implemented Jacobi's method in a C++ function that performs the steps listed
 in the previous section. This function sets the limit from step one in the previous
-section to \pwrten{-8} as well as a limit on the maximum number of iterations ($n^3$,
-where $n$ is the dimensionality of the matrix) in case the off-diagonal limit
+section to \pwrten{-8} as well as a limit on the maximum number of iterations ($N^3$,
+where $N$ is the dimensionality of the matrix) in case the off-diagonal limit
 isn't satisfied. We then, loop until one of these conditions is met. For each iteration,
 the function \texttt{FindMaxOffDiag} searches the current version of the matrix for
 the largest off diagonal matrix and \texttt{Rotate} computes $\theta$ then applies
 similarity transformation. The similarity transformation of each iteration is also applied
-to a second $N \times N$ matrix that was initialized to the identity. This allows us to
+to a second $N \times N$ matrix that was initialized to the $N$-dimensional identity
+matrix. This allows us to
 obtain the eigenvectors. After the loop is complete, the original tridiagonal matrix
 has been transformed into a diagonal matrix with the eigenvalues along the main
 diagonal. One final loop over the main diagonal is performed to find the lowest
@@ -422,7 +434,6 @@ In general, the smaller ($\omega$) the shallower the oscillator potential which
 shifts the eigenenergies lower. This also makes the wavefunctions more diffuse
 and requires a larger \rhomax to ensure that the upper boundary condition is
 satisfied. We varied $N$ and \rhomax until the ground state energy converged.
-We kept $N$ at or below 250 grid points to limit the run time of the program.
 TABLE~\ref{tab:w} shows that for the shallowest oscillator potential ($\omega = 0.01$)
 a large \rhomax is needed to capture the ground state wavefunction. For the
 other three cases, $\rhomax=5$ was sufficient. The ground state wavefunctions
@@ -466,11 +477,12 @@ the ground state wavefunction increases with decreasing $\omega$.
 
 \begin{figure}
 \centering
-	\includegraphics[width=0.5\textwidth]{figures/dnit.pdf}
+	\includegraphics[width=0.5\textwidth]{figures/dnit2.pdf}
 	\caption{The number of similarity transformations needed to
 	diagonalize the matrix is plotted against the matrix
-	dimensionality. Note the general $N^2$ dependence of
-	the number of iterations.}
+	dimensionality. A quadratic fit gives a $2 N^2 - 8 N$ dependence
+	of the number of similarity transformations on the dimensionality
+	$N$.}
 	\label{fig:dnit}
 \end{figure}
 
@@ -522,7 +534,8 @@ the ground state wavefunction increases with decreasing $\omega$.
 
 \subsection{The Coulomb interaction}
 
-We changed the potential to include the Coulomb interaction between the two electrons.
+We changed the potential to include the Coulomb interaction between the two electrons
+as described above.
 This problem is more difficult to solve analytically but it has been done for certain oscillator
 frequencies - see \citet{Taut1993}. We compare our results to these analytic results in
 TABLE~\ref{tab:wrc}. We then ran our simulation for $\omega_r = 0.01,0.5,1.0,5.0$.
@@ -535,9 +548,8 @@ shows that the relative distance between the two electrons increases as the osci
 is increased. This is somewhat counter-intuitive since the oscillator strength may be loosely
 interpreted as the degree of confinement for the two-electron system. However, taking into
 account the fact that it is the relative separation being plotted (the oscillator strength is
-divided out in the definition of $\alpha$) we recognize that the for more tightly confined
-two-electron systems the Coulomb repulsion becomes more influential in forcing the electrons
-apart.
+divided out in the definition of $\alpha$) we interpret this effect as the increasing influence
+of the Coulomb repulsion as the electrons become more tightly confined.
 
 \begin{table}
 \centering
@@ -586,7 +598,7 @@ apart.
 	\label{tab:ci}
 \end{table}
 
-\begin{figure}
+\begin{figure}[h!]
 \centering
 	\includegraphics[width=0.5\textwidth]{figures/CIwvfn.pdf}
 	\caption{Ground state wavefunctions vs. separation distance for two
@@ -596,9 +608,16 @@ apart.
 
 \section{Conclusions}
 
+We have applied Jacobi's method to solve the two-body Schr\"{o}dinger
+equation for electrons in a harmonic oscillator potential. We tested the C++ code
+developed to model this system and found it in good agreement with analytic
+results for both the non-interacting and Coulomb interacting cases. 
+
 %\begin{thebibliography}{99}
 %%\bibitem{miller2006} G.~A.~Miller, A.~K.~Opper, and E.~J.~Stephenson, Annu.~Rev.~Nucl.~Sci.~{\bf 56}, 253 (2006).
 %\end{thebibliography}
+
+\clearpage
 
 \bibliographystyle{plainnat}
 \bibliography{refs}
