@@ -6,6 +6,7 @@
 \usepackage{color}
 \usepackage{amsmath}
 \usepackage{multirow}
+\usepackage{natbib}
 
 \newcommand{\costa}[1]{% \costa{<power>}
 	\ensuremath{\cos ^{#1} {\theta}} }
@@ -17,25 +18,47 @@
 	\ensuremath{ \rho _{\mathrm{max}}} }
 
 \begin{document}
-\title{Project 2}
+\title{PHY 905 Project 2: Electrons in a harmonic oscillator potential}
 \author{Thomas Redpath}
-\affiliation{Department of Physics, Michigan State University, Outer Space}
+\affiliation{Department of Physics, Michigan State University}
 \begin{abstract}
-We present our Ferrari algorithm for solving linear equations. Our best algorithm runs as $4n$ FLOPS with $n$ the dimensionality of the matrix.
+We present our results from solving the Schr\"{o}dinger equation for two $s$-wave
+electrons confined by a harmonic oscillator potential. We first consider the
+case of non-interacting electrons then proceed to include the Coulomb
+interaction. We use Jacobi's method to solve Schr\"{o}dinger's equation
+numerically. Our results agree with the well known analytic eigenenergies
+(with $l=0$) $2E_{n0} = 3,7,11,\dots$ for the non-interacting case. With the Coulomb
+interaction, our results agree well with analytic solutions that exist for
+specific oscillator frequencies. Finally, we explore the energies and wavefunctions
+for interacting electrons with oscillator frequencies $\omega = 0.01,0.5,1.0,5.0$
+and observe how the relative distance between the electrons increases with
+increasing oscillator strength. We interpret this as an increasing influence of
+the Coulomb repulsion as the confining potential becomes more restrictive.
 \end{abstract}
 \maketitle
 
 \section{Introduction}
 
-In this project we solve Schr\"{o}edinger's equation for two electrons
+The spatial confinement of two electrons is a topic of great interest in
+solid state physics and materials science. In this report we address
+the simple problem of two electrons confined in a harmonic oscillator
+potential. We solve Schr\"{o}edinger's equation for two electrons
 in a spherically symmetric 3D harmonic oscillator (HO) potential first
 without then including the Coulomb interaction. We proceed by
 discretizing the radial Schr\"{o}edinger equation to cast it as an
 eigenvalue problem. We then employ Jacobi's method to diagonalize
-and obtain the eigenvalues and eigenvectors.
+and obtain the eigenvalues and eigenvectors. In the first section of
+this report, we present the theoretical framework required to solve
+this problem. In the Methods section we discuss how we implemented
+the Jacobi algorithm in a C++ program. In the Results and Discussions
+section we present the ground state eigenenergies and wavefunctions
+calculated using our code for different oscillator strengths both with and
+without the Coulomb interaction.
+
 
 \section{Theory}
 
+The derivation given here is summarized from \citet{Morten}.
 First, consider the radial part of Schr\"{o}edinger's equation for a
 single electron with a HO potential given by $V(r) = 1/2 kr^2$
 where $k = m \omega^2$
@@ -47,9 +70,10 @@ where $k = m \omega^2$
 \end{equation*}
 The energy eigenvalues are given by
 
-\begin{equation*}
+\begin{equation}
 E_{nl}=  \hbar \omega \left(2n+l+\frac{3}{2}\right),
-\end{equation*}
+\label{eq:enl}
+\end{equation}
 with $n=0,1,2,\dots$ and $l=0,1,2,\dots$, where $n$ and $l$
 are the principle angular momentum quantum numbers
 respectively.
@@ -317,13 +341,14 @@ a recipe for iteratively diagonalizing any symmetric matrix:
 
 We implemented Jacobi's method in a C++ function that performs the steps listed
 in the previous section. This function sets the limit from step one in the previous
-section to \pwrten{-8} as well as a limit on the maximum number of iterations ($n^3$,
-where $n$ is the dimensionality of the matrix) in case the off-diagonal limit
+section to \pwrten{-8} as well as a limit on the maximum number of iterations ($N^3$,
+where $N$ is the dimensionality of the matrix) in case the off-diagonal limit
 isn't satisfied. We then, loop until one of these conditions is met. For each iteration,
 the function \texttt{FindMaxOffDiag} searches the current version of the matrix for
 the largest off diagonal matrix and \texttt{Rotate} computes $\theta$ then applies
 similarity transformation. The similarity transformation of each iteration is also applied
-to a second $N \times N$ matrix that was initialized to the identity. This allows us to
+to a second $N \times N$ matrix that was initialized to the $N$-dimensional identity
+matrix. This allows us to
 obtain the eigenvectors. After the loop is complete, the original tridiagonal matrix
 has been transformed into a diagonal matrix with the eigenvalues along the main
 diagonal. One final loop over the main diagonal is performed to find the lowest
@@ -358,7 +383,18 @@ Jacobi algorithm and checks that the eigenvectors are orthogonal.
 
 The next test we performed checked that our code calculates eigenfunctions that make
 sense physically. We ran the Jacobi algorithm with 50 gridpoints and $\rhomax=5$ to
-check the behavior the first three eigenfuctions - see FIG.~\ref{fig:NIwvfn}.
+check the radial behavior of the first three eigenfuctions - see FIG.~\ref{fig:NIwvfn}.
+There are $n$ nodes in the radial wavefunctions (see eq.~\ref{eq:enl}) and the
+wavefunctions extend farther from 0 for higher eigenenergies. These trends are clearly
+visible in FIG.~\ref{fig:NIwvfn}. 
+
+A final test we implemented checks the orthogonality of the eigenfunctions resulting from
+the diagonalization. We showed in a preceeding section that the orthogonality of a basis set
+is maintained under similarity transformations. Since Jacobi's method is essentially a series of
+similarity transformations and since the same similarity transformations are applied to a set
+of orthonormal unit vectors to generate the eigenvectors (see preceeding section), the resulting
+eigenvectors should be orthogonal. To check this, we compute the dot product between the
+resulting eigenvectors and write out a warning if it is greater than \pwrten{-8}.
 
 \begin{figure}
 \centering
@@ -398,7 +434,6 @@ In general, the smaller ($\omega$) the shallower the oscillator potential which
 shifts the eigenenergies lower. This also makes the wavefunctions more diffuse
 and requires a larger \rhomax to ensure that the upper boundary condition is
 satisfied. We varied $N$ and \rhomax until the ground state energy converged.
-We kept $N$ at or below 250 grid points to limit the run time of the program.
 TABLE~\ref{tab:w} shows that for the shallowest oscillator potential ($\omega = 0.01$)
 a large \rhomax is needed to capture the ground state wavefunction. For the
 other three cases, $\rhomax=5$ was sufficient. The ground state wavefunctions
@@ -407,7 +442,7 @@ the ground state wavefunction increases with decreasing $\omega$.
 
 %% Compare Jacobi solver to python implementation run times %%
 
-\begin{table}
+\begin{table}[h]
 \centering
 	\begin{tabular}{ c c | c c c | c }
 	 & & \multicolumn{3}{c}{$2 E_i = 4i + 3$} &\\
@@ -442,11 +477,12 @@ the ground state wavefunction increases with decreasing $\omega$.
 
 \begin{figure}
 \centering
-	\includegraphics[width=0.5\textwidth]{figures/dnit.pdf}
-	\caption{The number of similarity transformations need to
-	diagonalized the matrix is plotted against the matrix
-	dimensionality. Note the general $N^2$ dependence of
-	the number of iterations.}
+	\includegraphics[width=0.5\textwidth]{figures/dnit2.pdf}
+	\caption{The number of similarity transformations needed to
+	diagonalize the matrix is plotted against the matrix
+	dimensionality. A quadratic fit gives a $2 N^2 - 8 N$ dependence
+	of the number of similarity transformations on the dimensionality
+	$N$.}
 	\label{fig:dnit}
 \end{figure}
 
@@ -462,7 +498,7 @@ the ground state wavefunction increases with decreasing $\omega$.
 	        & 250 & 50 & 0.0299\\
 	        & 250 & 100&0.0299\\
 \hline
-	\multirow{4}{*}{0.25} & 100 & 10 & 1.4992\\
+	\multirow{4}{*}{0.5} & 100 & 10 & 1.4992\\
 				     & 150 & 15 & 1.4992\\
 				     &  50  & 5   & 1.4994\\
 				     & 250 & 5   & 1.5002\\
@@ -483,21 +519,107 @@ the ground state wavefunction increases with decreasing $\omega$.
 \centering
 	\includegraphics[width=0.5\textwidth]{figures/gsw.pdf}
 	\caption{Ground state wavefunctions for different oscillator
-	strengths. The weakest potential ($\omega = 0.01$) is shown in black and the
+	strengths and no interaction between the electrons.
+	The weakest potential ($\omega = 0.01$) is shown in black and the
 	strongest potential ($\omega = 5$) is plotted in green.
 	The wavefunctions have been scaled to the $\omega = 5$ wavefunction.}
 	\label{fig:gsw}
 \end{figure}
+
 %\begin{figure}[hbtp]
 %\includegraphics[scale=0.4]{test1.pdf}
 %\caption{Exact and numerial solutions for $n=10$ mesh points.} 
 %\label{fig:n10points}
 %\end{figure}
 
+\subsection{The Coulomb interaction}
+
+We changed the potential to include the Coulomb interaction between the two electrons
+as described above.
+This problem is more difficult to solve analytically but it has been done for certain oscillator
+frequencies - see \citet{Taut1993}. We compare our results to these analytic results in
+TABLE~\ref{tab:wrc}. We then ran our simulation for $\omega_r = 0.01,0.5,1.0,5.0$.
+The simulation parameters and ground state eigenenergies are listed in TABLE~\ref{tab:ci}
+and the wavefunctions are plotted in FIG.~\ref{fig:ci}.
+
+We find that the ground state eigenenergies are higher than the non-interacting case,
+this is due to the additional Coulomb interaction energy. Furthermore, FIG.~\ref{fig:ci}
+shows that the relative distance between the two electrons increases as the oscillator strength
+is increased. This is somewhat counter-intuitive since the oscillator strength may be loosely
+interpreted as the degree of confinement for the two-electron system. However, taking into
+account the fact that it is the relative separation being plotted (the oscillator strength is
+divided out in the definition of $\alpha$) we interpret this effect as the increasing influence
+of the Coulomb repulsion as the electrons become more tightly confined.
+
+\begin{table}
+\centering
+	\begin{tabular}{ c | c c | c c | c }
+	$\omega_r$ & $N$ & \rhomax & $E_0$ (this work) & $E_0$ from \citep{Taut1993} & \# iterations\\
+\hline
+	\multirow{4}{*}{0.25} & 200 &   5 &  1.3066 & \multirow{4}{*}{1.25} & 67116\\
+				         & 200 & 10 &  1.2499 &                                      & 65222\\
+				         & 200 & 20 &  1.2498 &                                      & 62322\\
+				         & 400 & 20 &  1.2499 &                                      & 253817\\
+\hline
+	\multirow{3}{*}{0.05} & 200 & 10 &  0.3950 & \multirow{3}{*}{0.35} & 65508\\
+				         & 200 & 20 & 0.3499  &                                      & 63684\\
+				         & 400 & 20 & 0.3499  &                                      & 257392 
+	\end{tabular}
+	\caption{Numerical estimates for the eigenenergies compared to the analytic results
+	for two specific oscillator frequencies. The simulation parameters $N$ and \rhomax
+	were changed until the eigenenergies converged to the analytic values.}
+	\label{tab:wrc}
+\end{table}
+
+\begin{table}
+\centering
+	\begin{tabular}{ c | c c c | c }
+	$ \omega _r $ & $N$ & \rhomax & $E_0$ & \# iterations\\
+\hline
+	\multirow{6}{*}{0.01} & 400 & 200 & 0.1058 & 220550\\
+				     & 800 & 100 & 0.1058 & 970300\\
+				     & 400 & 100 & 0.1058 & 238187\\
+				     & 400 &  50  & 0.1058 & 248626\\
+				     & 50   &  50  & 0.1058 & 3655\\
+				     & 50   &  10  & 0.3034 & 3655\\
+				     & 50   &    5  & 0.8159  & 4110\\
+\hline
+	\multirow{2}{*}{0.5}   & 400  & 50  & 2.2289   & 196727\\
+				     & 800 & 100 & 2.2289   & 416090\\
+\hline
+	\multirow{2}{*}{1.0}  & 400  & 50  & 4.0527   & 111368\\
+				    & 800  & 100& 4.0527   & 171271\\
+\hline
+	\multirow{2}{*}{5.0}  & 400  & 50  & 17.3195 & 16217\\
+				    & 800  & 100& 17.3195 & 22457
+	\end{tabular}
+	\caption{Simulation parameters and ground state eigenenergies for
+	two electrons in a harmonic oscillator potential.}
+	\label{tab:ci}
+\end{table}
+
+\begin{figure}[h!]
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/CIwvfn.pdf}
+	\caption{Ground state wavefunctions vs. separation distance for two
+	Coulomb-interacting electrons in a harmonic oscillator potential.}
+	\label{fig:ci}
+\end{figure}
+
 \section{Conclusions}
 
-\begin{thebibliography}{99}
+We have applied Jacobi's method to solve the two-body Schr\"{o}dinger
+equation for electrons in a harmonic oscillator potential. We tested the C++ code
+developed to model this system and found it in good agreement with analytic
+results for both the non-interacting and Coulomb interacting cases. 
+
+%\begin{thebibliography}{99}
 %%\bibitem{miller2006} G.~A.~Miller, A.~K.~Opper, and E.~J.~Stephenson, Annu.~Rev.~Nucl.~Sci.~{\bf 56}, 253 (2006).
-\end{thebibliography}
+%\end{thebibliography}
+
+\clearpage
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
 
 \end{document}
