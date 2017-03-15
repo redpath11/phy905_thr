@@ -13,7 +13,9 @@ const double GM = 4.*3.14159265*3.14159265;
 /* Function Declarations */
 void Euler(int n,double years,double **);
 void Verlet(int n,double years,double **);
+void ThreeBodyEuler(int n,double years,double **);
 void SunEarth();
+void SunJupiterEarth();
 int main();
 
 
@@ -21,7 +23,8 @@ int main();
 
 int main()
 {
-  SunEarth();
+//  SunEarth();
+  SunJupiterEarth();
 
   return 1;
 }
@@ -48,6 +51,24 @@ void SunEarth()
 
   DeallocateMatrix(PV,4,n);
   DeallocateMatrix(VV,4,n);
+
+}
+
+void SunJupiterEarth()
+{
+  int n=1000; double yr = 4.;
+  double ** PV = AllocateMatrix(8,n);
+  PV[0][0]=0.; PV[1][0]=1.;// Earth
+  PV[2][0]=365.25*(-0.017301); PV[3][0]=365.25*(0.);//[AU/yr]
+
+  PV[4][0]=0.; PV[5][0]=5.2;//Jupiter
+  PV[6][0]=365.25*(-0.007179); PV[7][0]=365.25*(0.);//[AU/yr]
+
+  ThreeBodyEuler(n,yr,PV);
+
+  FileMatrix("../Benchmark/SJEsystemEuler.out",PV,8,n);
+
+  DeallocateMatrix(PV,8,n);
 
 }
 
@@ -91,7 +112,7 @@ void ThreeBodyEuler(int n,double years,double ** xyvxvy)
 */
   double h = years/((double) n);
   double NumeratorCoefficient = GM*h;
-  double MJMSunRatio = 9.5458e-4; double MEMSunRatio = 1.0e-6;
+  double MJMSunRatio = 9.5458e-4; double MEMSunRatio = 3.0e-6;
   for(int i=0;i<n-1;i++)
   {
     // Earth-Sun distance
