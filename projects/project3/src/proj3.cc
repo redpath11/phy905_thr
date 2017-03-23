@@ -4,11 +4,14 @@
 #include<string>
 
 #include"MatrixLib.hh"
+#include"vec3.h"
 
 using namespace std;
 
 /* Global variables */
-const double GM = 4.*3.14159265*3.14159265;
+//const double GM = 4.*3.14159265*3.14159265;
+const double GM = 39.4784176;
+
 
 /* Function Declarations */
 void Euler(int n,double years,double **);
@@ -16,6 +19,8 @@ void Verlet(int n,double years,double **);
 void ThreeBodyEuler(int n,double years,double **);
 void SunEarth();
 void SunJupiterEarth();
+void Vec3Verlet(vec3 *position,vec3 *velocity,double h);
+void Vec3SunEarth();
 int main();
 
 
@@ -24,7 +29,8 @@ int main();
 int main()
 {
 //  SunEarth();
-  SunJupiterEarth();
+//  SunJupiterEarth();
+  Vec3SunEarth();
 
   return 1;
 }
@@ -52,6 +58,21 @@ void SunEarth()
   DeallocateMatrix(PV,4,n);
   DeallocateMatrix(VV,4,n);
 
+}
+
+void Vec3SunEarth()
+{
+    int n=100; double years = 1.;
+    double h = years/((double) n);
+    string outfile = "../../Benchmark/vec3test.out";
+
+    vec3 *earth_pos = new vec3(0.,1.,0.); earth_pos->print(outfile.c_str());
+    vec3 *earth_vel = new vec3(365.25*(-0.017301),365.25*(0.),0.);
+    for(int i=0;i<n;i++)
+    {
+        Vec3Verlet(earth_pos,earth_vel,h);
+        earth_pos->print(outfile.c_str());
+    }
 }
 
 void SunJupiterEarth()
@@ -163,5 +184,44 @@ void Verlet(int n,double years,double ** xyvxvy)
     xyvxvy[2][i+1] = xyvxvy[2][i] - hGMOver2*(xrii + xri);// should be minus on last term??
     xyvxvy[3][i+1] = xyvxvy[3][i] - hGMOver2*(yrii + yri);// should be minus on last term??
   }
+
+}
+
+void Vec3Verlet(vec3 *position,vec3 *velocity,double h)
+{
+/* The matrix xyvxvy will hold the positons and velocities
+ * at each time step (i) with the following convention:
+ * x -> xyvxvy[0][i]
+ * y -> xyvxvy[1][i]
+ * vx-> xyvxvy[2][i]
+ * vy-> xyvxvy[3][i]
+*/
+    double hGMOver2 = h*GM/2.; double hhGMOver2 = h*h*GM/2.;
+
+    vec3 previousPosition = vec3();
+    previousPosition = vec3(position);
+//    vec3 previousVelocity = vec3();
+//    previousVelocity = vec3(velocity);
+
+    double ri  = position->length();
+    double xri = position->x() / ri;
+    double yri = position->y() / ri;
+
+    /* positions */
+    position->setX(previousPosition.x() + h*velocity->x() - hhGMOver2*xri);
+    position->setY(previousPosition.y() + h*velocity->y() - hhGMOver2*yri);
+//    xyvxvy[0][i+1] = xyvxvy[0][i] + h*xyvxvy[2][i] - hhGMOver2*xri;// should be minus on last term??
+//    xyvxvy[1][i+1] = xyvxvy[1][i] + h*xyvxvy[3][i] - hhGMOver2*yri;// should be minus on last term??
+    double rii = position->length();
+    double xrii= position->x() / rii;
+    double yrii= position->y() / rii;
+//    double rii = sqrt(xyvxvy[0][i+1]*xyvxvy[0][i+1] + xyvxvy[1][i+1]*xyvxvy[1][i+1]);
+//    double xrii = xyvxvy[0][i+1] / rii;
+//    double yrii = xyvxvy[1][i+1] / rii;
+    velocity->setX(velocity->x() - hGMOver2*(xrii + xri));
+    velocity->setY(velocity->y() - hGMOver2*(yrii + xri));
+//    xyvxvy[2][i+1] = xyvxvy[2][i] - hGMOver2*(xrii + xri);// should be minus on last term??
+//    xyvxvy[3][i+1] = xyvxvy[3][i] - hGMOver2*(yrii + yri);// should be minus on last term??
+
 
 }
