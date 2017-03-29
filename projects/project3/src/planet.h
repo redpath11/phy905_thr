@@ -9,23 +9,24 @@ using std::vector;
 class planet
 {
 public:
-  // Properties
-  double mass;
-  double position[3];
-  double velocity[3];
-  double potential;
-  double kinetic;
+    // Properties
+    double mass;
+    double position[3];
+    double velocity[3];
+    double potential;
+    double kinetic;
 
-  // Initializers
-  planet();
-  planet(double M,double x,double y,double z,double vx, double vy,double vz);
+    // Initializers
+    planet();
+    planet(double M,double x,double y,double z,double vx, double vy,double vz);
 
-  // Functions
-  double distance(planet otherPlanet);
-  double GravitationalForce(planet otherPlanet, double Gconst);
-  double Acceleration(planet otherPlanet, double Gconst);
-  double KineticEnergy();
-  double PotentialEnergy(planet &otherPlanet, double Gconst, double epsilon);
+    // Functions
+    double rmag();
+    double distance(planet otherPlanet);
+    double GravitationalForce(planet otherPlanet, double Gconst);
+    double Acceleration(planet otherPlanet, double Gconst);
+    double KineticEnergy();
+    double PotentialEnergy(planet &otherPlanet, double Gconst, double epsilon);
 
 };
 
