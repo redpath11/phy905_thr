@@ -1,7 +1,7 @@
 #include "ssystem.h"
 #include "planet.h"
 #include "MatrixLib.hh"
-#include <iostream>
+//#include <iostream>
 #include <cmath>
 #include "time.h"
 
@@ -79,7 +79,7 @@ void ssystem::VVerlet(int nsteps,double years,int printNsteps,double epsilon)
 	GravAccel(current,other,acceleration[pi],epsilon);
 //	GravAccel(current,other,ax,ay,az,epsilon);
       }
-      
+
       // New position for current
       for(int i=0;i<3;i++)
       { current.position[i] += current.velocity[i]*h + hhOver2*acceleration[pi][i]; }
@@ -99,7 +99,8 @@ void ssystem::VVerlet(int nsteps,double years,int printNsteps,double epsilon)
       for(int j=0;j<3;j++){Positions[n][pi*3+j]=current.position[j];}
     }
 
-    FileMatrix("../Benchmark/ooSystem.out",Positions,printNsteps,3*total_planets);
+//    FileMatrix("../Benchmark/ooSystem.out",Positions,printNsteps,3*total_planets);
+    FileMatrix("../../Benchmark/ooSystem.out",Positions,printNsteps,3*total_planets);
 
   }
 

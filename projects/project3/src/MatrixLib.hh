@@ -1,6 +1,6 @@
 // This program sets up a simple matrix with random values for the matrix elements
 // Matrices are always given by upper case variables
-//#include <iostream>
+#include <iostream>
 #include <new>
 #include <cstdio>
 #include <cstdlib>

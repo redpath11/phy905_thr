@@ -38,29 +38,45 @@ fileSS     = "../Benchmark/ooSystem.out"
 
 data = np.loadtxt(fileSS)
 
-xV = data[:,0]
-yV = data[:,1]
-zV = data[:,2]
+xHg = data[:,0]
+yHg = data[:,1]
+zHg = data[:,2]
 
-xE = data[:,3]
-yE = data[:,4]
-zE = data[:,5]
+xV = data[:,3]
+yV = data[:,4]
+zV = data[:,5]
 
-xM = data[:,6]
-yM = data[:,7]
-zM = data[:,8]
+xE = data[:,6]
+yE = data[:,7]
+zE = data[:,8]
 
-xJ = data[:,9]
-yJ = data[:,10]
-zJ = data[:,11]
+xM = data[:,9]
+yM = data[:,10]
+zM = data[:,11]
 
-xSt = data[:,12]
-ySt = data[:,13]
-zSt = data[:,14]
+xJ = data[:,12]
+yJ = data[:,13]
+zJ = data[:,14]
 
-xS = data[:,15]
-yS = data[:,16]
-zS = data[:,17]
+xSt = data[:,15]
+ySt = data[:,16]
+zSt = data[:,17]
+
+xU = data[:,18]
+yU = data[:,19]
+zU = data[:,20]
+
+xN = data[:,21]
+yN = data[:,22]
+zN = data[:,23]
+
+xP = data[:,24]
+yP = data[:,25]
+zP = data[:,26]
+
+xS = data[:,27]
+yS = data[:,28]
+zS = data[:,29]
 #plotE = plt.plot(x,y,'b')
 #plotV = plt.plot(xV,yV,'r')
 #plotE = plt.plot(xE,yE,'b');
@@ -70,9 +86,13 @@ zS = data[:,17]
 fig = plt.figure()
 ax1 = fig.add_subplot(111,projection='3d')
 ax1.plot(xS,yS,zS,'y')
+ax1.plot(xHg,yHg,zHg,'k')
 ax1.plot(xV,yV,zV,'y')
 ax1.plot(xE,yE,zE,'b')
 ax1.plot(xM,yM,zM,'r')
 ax1.plot(xJ,yJ,zJ,'r')
 ax1.plot(xSt,ySt,zSt,'m')
+ax1.plot(xU,yU,zU,'b')
+ax1.plot(xN,yN,zN,'b')
+ax1.plot(xP,yP,zP,'k')
 plt.show()
