@@ -13,6 +13,7 @@ public:
     double mass;
     double position[3];
     double velocity[3];
+    double am[3];
     double potential;
     double kinetic;
 
@@ -27,6 +28,7 @@ public:
     double Acceleration(planet otherPlanet, double Gconst);
     double KineticEnergy();
     double PotentialEnergy(planet &otherPlanet, double Gconst, double epsilon);
+    double AngularMomentum();
 
 };
 

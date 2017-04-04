@@ -3,8 +3,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-filein     = "../Benchmark/SEsystemEuler.out"
-fileV      = "../Benchmark/SEsystemVerlet.out"
+fileEuler  = "../Benchmark/SEsystemEuler.out"
+fileVerlet = "../Benchmark/SEsystemVerlet.out"
 file3BE    = "../Benchmark/SJEsystemEuler.out"
 fileVec3   = "../Benchmark/vec3test.out"
 filePlanet = "../Benchmark/PlanetVerlet.out"
@@ -12,13 +12,6 @@ fileSun    = "../Benchmark/SunVerlet.out"
 fileEarth  = "../Benchmark/EarthVerlet.out"
 fileSS     = "../Benchmark/ooSystem.out"
 
-#data = np.loadtxt(filein)
-#x = data[0,:]
-#y = data[1,:]
-
-#dataV = np.loadtxt(fileV)
-#xV = dataV[0,:]
-#yV = dataV[1,:]
 
 #data = np.loadtxt(file3BE)
 #xE = data[0,:]
@@ -74,25 +67,25 @@ xP = data[:,24]
 yP = data[:,25]
 zP = data[:,26]
 
+
 xS = data[:,27]
 yS = data[:,28]
 zS = data[:,29]
-#plotE = plt.plot(x,y,'b')
-#plotV = plt.plot(xV,yV,'r')
-#plotE = plt.plot(xE,yE,'b');
-#plotJ = plt.plot(xJ,yJ,'r');
+
 #plotE = plt.plot(x,y,'r')
-#plt.show()
 fig = plt.figure()
 ax1 = fig.add_subplot(111,projection='3d')
-ax1.plot(xS,yS,zS,'y')
-ax1.plot(xHg,yHg,zHg,'k')
-ax1.plot(xV,yV,zV,'y')
-ax1.plot(xE,yE,zE,'b')
-ax1.plot(xM,yM,zM,'r')
-ax1.plot(xJ,yJ,zJ,'r')
-ax1.plot(xSt,ySt,zSt,'m')
-ax1.plot(xU,yU,zU,'b')
-ax1.plot(xN,yN,zN,'b')
-ax1.plot(xP,yP,zP,'k')
+ax1.plot(xS,yS,zS,'y*',markersize=10.,label='Sun')
+ax1.plot(xHg,yHg,zHg,'m',label='Mercury')
+ax1.plot(xV,yV,zV,'y',label='Venus')
+ax1.plot(xE,yE,zE,'b',label='Earth')
+ax1.plot(xM,yM,zM,'r',label='Mars')
+#ax1.plot(xJ,yJ,zJ,'r',label='Jupiter')
+#ax1.plot(xSt,ySt,zSt,'m',label='Saturn')
+#ax1.plot(xU,yU,zU,'b',label='Uranus')
+#ax1.plot(xN,yN,zN,'b',label='Neptune')
+#ax1.plot(xP,yP,zP,'r',label='Pluto')
+plt.title('The Inner Solar System')
+#plt.title('The Outer Solar System')
+plt.legend(loc=2)
 plt.show()

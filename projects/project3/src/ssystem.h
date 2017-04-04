@@ -11,11 +11,12 @@ public:
     friend class planet;
 
     // properties
-    double radius,total_mass,G;
+    double radius,total_mass,G,c;
     int total_planets;
     vector<planet> all_planets;
     double totalKinetic;
     double totalPotential;
+    double totalAngularMomentum;
 
     // constants
 
@@ -25,21 +26,18 @@ public:
 
     // functions
     void add(planet newplanet);
-//    void addM(planet newplanet);
-//    void GravitationalConstant();
-//    void print_position(std::ofstream &output, int dimension, double time, int number);
-//    void print_energy(std::ofstream &output, double time, double epsilon);
+    void Euler(int nsteps, double years, int printNsteps, double epsilon);
     void VVerlet(int nsteps, double years, int printNsteps, double epsilon);
+    void HgVerlet(int nsteps, double years, int printNsteps, double epsilon);
 //    void GravAccel(planet &current,planet &other, double &ax,double &ay,double &az,double epsilon);
     void GravAccel(planet &current,planet &other, double *a,double epsilon);
-//    double **setup_matrix(int height, int width);
-//    void delete_matrix(double **matrix);
-//    void GravitationalForce(planet &current, planet &other, double &Fx, double &Fy, double &Fz, double epsilon);
-//    void GravitationalForce_RK(double x_rel, double y_rel, double z_rel, double &Fx, double &Fy, double &Fz, double mass1, double mass2);
-//    void KineticEnergySystem();
-//    void PotentialEnergySystem(double epsilon);
-//    double EnergyLoss();
-//    bool Bound(planet OnePlanet);
+    void HgGravAccel(planet &current,planet &other,double *a,double l);
+    void GravForce(planet &current, planet &other, double *f, double epsilon);
+    void KineticEnergySystem();
+    void PotentialEnergySystem(double epsilon);
+    void PotentialEnergy2body(double epsilon);
+    void AngularMomentumSystem();
+    bool Bound(planet p);
 
 };
 

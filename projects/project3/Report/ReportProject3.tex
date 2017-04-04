@@ -16,484 +16,357 @@
 	\ensuremath{10^{#1}} }
 \newcommand{\rhomax}{
 	\ensuremath{ \rho _{\mathrm{max}}} }
-\newcommand{\deriv[3]}{% \deriv{<order>}{<function>}{<variable>}
-	\ensuremath{ \frac{d ^{#1} #2}{d #3}}}
+\newcommand{\fourpisqr}{
+	\ensuremath{ 4 \pi ^2} }
+\newcommand{\deriv}[3][]{% \deriv[<order>]{<function>}{<variable>}
+	\ensuremath{ \frac{d ^{#1} {#2}}{d {#3}^{#1}}}}
 
 \begin{document}
 \title{PHY 905 Project 3: The Solar System}
 \author{Thomas Redpath}
-\affiliation{Department of Physics, Michigan State University}
+\affiliation{Department of Physics, Michigan State University, Outer Space}
 \begin{abstract}
-We present our results from solving the Schr\"{o}dinger equation for two $s$-wave
-electrons confined by a harmonic oscillator potential. We first consider the
-case of non-interacting electrons then proceed to include the Coulomb
-interaction. We use Jacobi's method to solve Schr\"{o}dinger's equation
-numerically. Our results agree with the well known analytic eigenenergies
-(with $l=0$) $2E_{n0} = 3,7,11,\dots$ for the non-interacting case. With the Coulomb
-interaction, our results agree well with analytic solutions that exist for
-specific oscillator frequencies. Finally, we explore the energies and wavefunctions
-for interacting electrons with oscillator frequencies $\omega = 0.01,0.5,1.0,5.0$
-and observe how the relative distance between the electrons increases with
-increasing oscillator strength. We interpret this as an increasing influence of
-the Coulomb repulsion as the confining potential becomes more restrictive.
+We present results from simulations of planetary dynamics involving two, three
+and nine bodies. We demonstrate the stability of simulations utilizing the velocity
+Verlet method over those using the Euler method. Using this algorithm, we find
+that a three body Sun-Earth-Jupiter system with the Jupiter mass comparable
+to $M _{\odot}$ results in a drastically altered Earth orbit whereas increasing
+Jupiter's mass by a factor of 10 has no effect on the system. Finally, we
+demonstrate the stability of all nine major bodies of the solar system over a
+300 year period.
 \end{abstract}
 \maketitle
 
 \section{Introduction}
 
-The mathematical description of the planetary motion via Newton's law
+The mathematical description of planetary motion via Newton's law
 of gravitation is one of the great triumphs of classical physics. In this
 report, we numerically solve Newton's equations using the velocity
-Verlet method.
-
-The spatial confinement of two electrons is a topic of great interest in
-solid state physics and materials science. In this report we address
-the simple problem of two electrons confined in a harmonic oscillator
-potential. We solve Schr\"{o}edinger's equation for two electrons
-in a spherically symmetric 3D harmonic oscillator (HO) potential first
-without then including the Coulomb interaction. We proceed by
-discretizing the radial Schr\"{o}edinger equation to cast it as an
-eigenvalue problem. We then employ Jacobi's method to diagonalize
-and obtain the eigenvalues and eigenvectors. In the first section of
-this report, we present the theoretical framework required to solve
-this problem. In the Methods section we discuss how we implemented
-the Jacobi algorithm in a C++ program. In the Results and Discussions
-section we present the ground state eigenenergies and wavefunctions
-calculated using our code for different oscillator strengths both with and
-without the Coulomb interaction.
+Verlet method and model the dynamics of two and three body planetary
+systems as well as the nine major bodies of the solar system. The
+report is organized as follows: in the next section we give a brief summary
+of the mathematical approach to solving Newton's equations and the
+system of units used in this project. In the third
+section we discuss the algorithms and methods we used, and in the fourth
+section we present our results.
 
 
 \section{Theory}
 
-The familiar form for the gravitational force
+The familiar form for the gravitational force between the Earth and the Sun
 
 \begin{equation}
 	F_G=\frac{GM_{\odot}M_{\mathrm{Earth}}}{r^2},
 	\label{eq:fgrav}
 \end{equation}
-
-gives the differential equation governing the motion of massive bodies:
-
-\begin{equation}
-	\deriv{2}{x}{t}
-	
-
-The derivation given here is summarized from \citet{Morten}.
-First, consider the radial part of Schr\"{o}edinger's equation for a
-single electron with a HO potential given by $V(r) = 1/2 kr^2$
-where $k = m \omega^2$
-
-\begin{equation*}
-  -\frac{\hbar^2}{2 m} \left ( \frac{1}{r^2} \frac{d}{dr} r^2
-  \frac{d}{dr} - \frac{l (l + 1)}{r^2} \right )R(r) 
-     + V(r) R(r) = E R(r).
-\end{equation*}
-The energy eigenvalues are given by
+gives the differential equation governing motion under the influence
+of gravity:
 
 \begin{equation}
-E_{nl}=  \hbar \omega \left(2n+l+\frac{3}{2}\right),
-\label{eq:enl}
+	\deriv[2]{x_i}{t} = \frac{ F_{Gx_i}}{M_{\mathrm{Earth}}}
+	\label{difeq}
 \end{equation}
-with $n=0,1,2,\dots$ and $l=0,1,2,\dots$, where $n$ and $l$
-are the principle angular momentum quantum numbers
-respectively.
-
-With the substitution $R(r) = (1/r) u(r)$, the dimensionless variable
-$\rho = (1/ \alpha) r$ and taking $l=0$ we obtain
-
-\begin{equation*}
-  -\frac{d^2}{d\rho^2} u(\rho) 
-       + \frac{mk}{\hbar^2} \alpha^4\rho^2u(\rho)  = \frac{2m\alpha^2}{\hbar^2}E u(\rho) .
-\end{equation*}
-where $\alpha$ is a constant with dimension length.
-
-Fixing $\alpha$ such that
+one for each directional coordinate $x_i$; so that $r^2 = \sum_i x_{i}^{2}$.
+In this project, we will
+model the solar system in three dimensions. Substituting the form
+for $F_{Gx_i}$ (eq.~\ref{eq:fgrav}) and including a minus since the
+force is attractive we obtain
 
 \begin{equation*}
-\frac{mk}{\hbar^2} \alpha^4 = 1 \Rightarrow \alpha = \left(\frac{\hbar^2}{mk}\right)^{1/4}
+	\deriv[2]{x_i}{t} = - \frac{GM}{r^3} x_i
 \end{equation*}
-and defining
+For our three dimensional case, there are three second order differential
+equations which we can re-write as six first order differential equations.
+These equations are coupled via $r^2 = \sum_i x_{i}^{2}$.
+
+\begin{align*}
+	\deriv[]{v_i}{t} &= - \frac{GM}{r^3}\\
+	\deriv[]{x_i}{t} &= v_x
+\end{align*}
+
+\subsection*{Units}
+
+We will work in astronomical units (AU for distance and years for time)
+appropriate to the scale of this problem. Furthermore, we will use
+mass ratios to the solar mass ($M _{\odot} = 2.0 \times \pwrten{30}$ kg).
+With these units, the value for $GM_{\odot}$ is found to be $4\pi^2$ by
+assuming circular orbits for which the angular acceleration is given by
+
+\begin{align*}
+	\frac{F_G}{M} &= \frac{v^2}{r} = \frac{G M_{\odot}}{r^2}\\
+	v &= 2 \pi r \left [ \frac{\mathrm{AU}}{\mathrm{year}} \right ]\\
+	& \Rightarrow v^2 r = GM_{\odot} = 4 \pi ^2 \left [ 
+\frac{\mathrm{AU}^3}{\mathrm{year}^2} \right ]
+\end{align*}
+
+\section*{Algorithms and Methods}
+
+The C++ code developed for this project primarily utilizes the velocity
+Verlet method to solve the first order differential equations. For comparison,
+we also coded and implemented Euler's method. In this section we briefly
+summarize the derivations of these methods from \citet{Morten}. We
+then provide a description of the codes which can be
+found at \url{https://github.com/redpath11/phy905_thr} in the
+\texttt{projects/project3} directory.
+
+\subsection*{Euler's Method}
+
+The first order differential equations may be solved numerically by
+discretizing each dimension with a step size $h$. The numerical first
+derivative for an arbitrary dimension $x$ comes from a Tayler
+expansion
 
 \begin{equation*}
-\lambda = \frac{2m\alpha^2}{\hbar^2}E,
+	f _{i} = \frac{x _{i+1} - x{i}}{h} + O(h^2)
 \end{equation*}
-we can rewrite Schr\"{o}edinger's equation as
+where $f$ is the first time derivative of $x$ (also a function of time)
+and the subscripts denote time steps. The discretized position and velocity
+equations for one dimension specialized to the gravitational case:
 
-\begin{equation}
-  -\frac{d^2}{d\rho^2} u(\rho) + \rho^2u(\rho)  = \lambda u(\rho) .
-\label{eq:1bseq}
-\end{equation}
-In 3D with $l=0$, the eigenvalues are
-$\lambda_0=3,\lambda_1=7,\lambda_2=11,\dots .$
+\begin{align*}
+	x_{i+1} &= x_i + v_{i}h + O(h^2)\\
+	v_{i+1} &= v_i - \frac{ \fourpisqr x_i }{r_i ^3 } h + O(h^2)
+\end{align*}
+where now $r_i$ is the magnitude of the radius vector at time step $i$.
 
-It is now straightforward to see how this equation can be solved numerically using the standard
-numerical second derivative
+\subsection*{Verlet Method}
 
-\begin{equation}
-    u''=\frac{u(\rho+h) -2u(\rho) +u(\rho-h)}{h^2} +O(h^2),
-    \label{eq:diffoperation}
-\end{equation}
-with $N$ grid points and the step size $h = (\rho _N - \rho _0) / N$ where $\rho_0, \rho_N$
-are the maximum and minimum values chosen for the grid. The value of $\rho$ at the
-$i^{\mathrm{th}$ grid point is then $\rho _i = \rho _0 + ih; i = 1,2,\dots,N$.
+The first order differential equations may also be solved using the
+Verlet method which may be specialized to the graviational case
+since the form of the acceleration is simple and known. The Verlet
+method derives from a summation of two Taylor expansions. Consider
+the position in one dimension
 
-In the compact ``discretized notation,'' Sch\"{o}dinger's equation becomes
+\begin{align*}
+	x(t+h) &= x(t) + h x'(t) + \frac{1}{2} h^2  x''(t) + O(h^3)\\
+	x(t-h) &= x(t)  - h x'(t) + \frac{1}{2} h^2  x''(t) + O(h^3).
+\end{align*}
+Summing these two expansions and switching to the discretized
+notation gives
 
 \begin{equation*}
--\frac{u_{i+1} -2u_i +u_{i-1}}{h^2}+\rho_i^2u_i = \lambda u_i.
+	x_{i+1} = 2 x_i - x_{i-1} + h^2 x''_i + O(h^4).
 \end{equation*}
-Representing the diagonal matrix elements as
+In general, this algorithm is not self-starting since it requires the
+value of $x$ at two previous points.
 
-\begin{equation*}
-   d_i=\frac{2}{h^2}+V_i,
-\end{equation*}
-and the non-diagonal matrix element
-\begin{equation*}
-   e_i=-\frac{1}{h^2}.
-\end{equation*}
-we arrive at a matrix eigenvalue equation representation of the problem
+Now, consider a Taylor expansion of the velocity and note the
+relationshipe between velocity and acceleration $v' = a$.
 
-\begin{equation*}
-    \begin{bmatrix}d_0 & e_0 & 0   & 0    & \dots  &0     & 0 \\
-                                e_1 & d_1 & e_1 & 0    & \dots  &0     &0 \\
-                                0   & e_2 & d_2 & e_2  &0       &\dots & 0\\
-                                \dots  & \dots & \dots & \dots  &\dots      &\dots & \dots\\
-                                0   & \dots & \dots & \dots  &\dots  e_{N-1}     &d_{N-1} & e_{N-1}\\
-                                0   & \dots & \dots & \dots  &\dots       &e_{N} & d_{N}
-             \end{bmatrix}  \begin{bmatrix} u_{0} \\
-                                                              u_{1} \\
-                                                              \dots\\ \dots\\ \dots\\
-                                                              u_{N}
-             \end{bmatrix}=\lambda \begin{bmatrix} u_{0} \\
-                                                              u_{1} \\
-                                                              \dots\\ \dots\\ \dots\\
-                                                              u_{N}
-             \end{bmatrix}.  
-%      \label{eq:sematrix}
-\end{equation*}
+\begin{align*}
+	v_{i+t} &= v_i + h v_i ' + \frac{1}{2} v_i '' + O(h^3)\\
+	a_{i+1} &= v'_i + h v''_i + O(h^2).
+\end{align*}
+We will assume that the velocity is a linear function of time
+$hv''_i \approx v'_{i+1} - v'_i$. We can now write the final
+algorithmic form for the position and velocities.
 
-To account for the Coulomb interaction between two electons, it is convenient to
-introduce a change of coordinates (eq.~\ref{eq:changecoordinates}) that allows
-us to separates the Schr\"{o}dinger
-equation into two parts, one that describes the center of mass ($R$) of the two-body
-system and one that describes the interaction of the two electrons ($r$).
-
-\begin{align}\label{eq:changecoordinates}
-\begin{split}
-	r &= r_1 - r_2\\
-	R &= \frac{1}{2} r_1 + r_2
-\end{split}
+\begin{align}
+%%\begin{split}
+	x_{i+1} &= x_i + hv_i + \frac{h^2}{2} v'_i + O(h^3)\\
+	v_{i+1} &= v_i + \frac{h}{2}(v'_{i+1} + v'_i) + O(h^3)
+\label{eq:Verlet}
+%%\end{split}
 \end{align}
-With this change of coordinates, we may re-write the two-body Schr\"{o}dinger
-equation
 
-\begin{align*}
-\left(  -\frac{\hbar^2}{2 m} \frac{d^2}{dr_1^2} -\frac{\hbar^2}{2 m} \frac{d^2}{dr_2^2}+ \frac{1}{2}k r_1^2+ \frac{1}{2}k r_2^2\right)u(r_1,r_2) \\
- = E^{(2)} u(r_1,r_2)
-\end{align*}
-as
+\subsection*{Codes}
 
-\begin{align*}
-\left(  -\frac{\hbar^2}{m} \frac{d^2}{dr^2} -\frac{\hbar^2}{4 m} \frac{d^2}{dR^2}+ \frac{1}{4} k r^2+  kR^2\right)u(r,R)\\
-= E^{(2)} u(r,R)
-\end{align*}
-(see Appendix) and the ansatz for the wavefunction $\Psi(r,R) = \psi(r) \phi(R)$
-allows us to separate the wavefunction such that the two-body eigenenergies
-are a sum of the center of mass and interaction energies $E ^{(2)} = E _R + E_r$.
-With the form of the Coulomb interaction between two electrons
-
-\begin{equation*}
-V(r_1,r_2) = \frac{\beta e^2}{|\mathbf{r}_1-\mathbf{r}_2|}=\frac{\beta e^2}{r},
-\end{equation*}
- $\beta e^2=1.44$ eVnm, and the dimensionless variable $\rho = r/\alpha$ the
-Schr\"{o}dinger equation becomes
-
-\begin{equation*}
-  -\frac{d^2}{d\rho^2} \psi(\rho) 
-       + \frac{1}{4}\frac{mk}{\hbar^2} \alpha^4\rho^2\psi(\rho)+\frac{m\alpha \beta e^2}{\rho\hbar^2}\psi(\rho)  = 
-\frac{m\alpha^2}{\hbar^2}E_r \psi(\rho) .
-\end{equation*}
-By defining an ``effective'' oscillator frequency
-
-\begin{equation*}
-\omega_r^2=\frac{1}{4}\frac{mk}{\hbar^2} \alpha^4,
-\end{equation*}
-fixing $\alpha$ such that
-
-\begin{equation*}
-\frac{m\alpha \beta e^2}{\hbar^2}=1 \Rightarrow \alpha = \frac{\hbar^2}{m\beta e^2}
-\end{equation*}
-and letting
-
-\begin{equation*}
-\lambda = \frac{m\alpha^2}{\hbar^2}E,
-\end{equation*}
-the Schr\"{o}dinger equation becomes
-
-\begin{equation*}
-  -\frac{d^2}{d\rho^2} \psi(\rho) + \omega_r^2\rho^2\psi(\rho) +\frac{1}{\rho} = \lambda \psi(\rho).
-\end{equation*}
-which has a similar form to eq.~\ref{eq:1bseq}. The same discretization treatment
-described above can be applied to this equation to arrive at the same matrix
-eigenvalue equation as before, just with a different potential. Namely, the
-$V_i$ term in the diagonal matrix elements becomes $\omega_r ^2 \rho + 1/\rho$
-instead of $\rho ^2$.
+To test that we properly coded the algorithms, we first implemented them
+in a simple C code (\texttt{src/p3test.cc}) using separate funcitons for the
+Euler and Verlet methods to model the Sun-Earth system with the Sun fixed
+at the center. We then expanded the code to implement the algorithms
+within a class making it easier to add multiple planets to the simulation. We
+modeled two classes after the examples provided by Morten Hjorth-Jensen
+at \url{https://github.com/CompPhysics/ComputationalPhysicsMSU}. We
+defined the first class to store the mass, position, velocity, kinetic and potential
+energies of a planet in the simulation (see the \texttt{src/planet.cpp} file). The
+second class (\texttt{src/ssystem.cpp}) holds an array of planet objects and
+includes functions to implement the Euler and Verlet methods. These two
+classes are used in the \texttt{p3main.cc} program to obtain the results
+discussed in the next section.
 
 
+\section{Results and discussion}
 
-\subsection{Unitary transformations preserve orthogonality}
+\subsection*{The Earth-Sun system}
 
-Consider a set of vectors $\mathbf{v}_i$ that form an orthonormal basis,
-\[
-\mathbf{v}_i = \begin{bmatrix} v_{i1} \\ \dots \\ \dots \\v_{in} \end{bmatrix}
-\]
-We assume that the basis is orthogonal, that is 
-\[
-\mathbf{v}_j^T\mathbf{v}_i = \delta_{ij}.
-\]
-Now consider a set of vectors $\mathbf{w}_i$ derived from applying an orthogonal
-transformation to the original vectors $\mathbf{v}_i$
-\[
-\mathbf{w}_i=\mathbf{S}\mathbf{v}_i,
-\]
-The dot product between two transformed vectors is preserved due to the
-property $\mathbf{S}^T \mathbf{S} = \mathbf{I}$ of orthogonal matrices
-or $\mathbf{U} ^\dagger \mathbf{U} = \mathbf{I}$ of unitary matrices.
-So, the transformed vectors are orthogonal like the original vectors.
-\begin{align*}
-\mathbf{w}_j^T\mathbf{w}_i &= (\mathbf{S} \mathbf{v}_j)^T (\mathbf{S}\mathbf{v}_i)\\
-	&= \mathbf{v}_j ^T \mathbf{S}^T \mathbf{S} \mathbf{v}_i\\
-	&= \mathbf{v}_j ^T \mathbf{v}_i\\
-	&= \delta_{ij}.
-\end{align*}
+First, we compare the Euler and velocity Verlet results for a simple two-body
+system (the Sun and the Earth). For this comparison, we placed the sun at
+the origin at rest and start the earth on the $y$ axis with an initial velocity
+in the $-x$ direction and a magnitude given by the vector from \citep{nasa}.
+We then adjust the step size in decades from 0.001 to 1. years. The results
+are summarized in TABLE~\ref{tab:EVresults} and FIG.~\ref{fig:se001} - 
+\ref{fig:se10}. In general, the Euler method is faster than the Verlet,
+requiring only 4 floating point operations per step compared to the 6
+operations per step needed by the Verlet algorithm. These estimates exclude
+the operations necessary to compute the forces which are carried out in an
+external function. The Verlet algorithm produces more stable results in terms
+of energy and angular momentum. Physically, these quantities should be
+conserved because there are no non-conservative forces and no external
+torques acting on the system. Even with the 0.1 year step size, the
+Verlet algorithm produces a semi-stable orbit (FIG.~\ref{fig:se1}), while
+the Euler method gives orbits that spiral out even for the best step size
+(FIG.~\ref{fig:se001}).
 
-\section{Algorithms and methods}
-
-To solve the matrix eigenvalue problem, we applied Jacobi's method within a
-C++ program to diagonalize the $N \times N$ matrix. The source code developed
-for this project is available at \url{https://github.com/redpath11/phy905_thr}.
-The directory \texttt{projects/project2/} inside that repository contains the
-source code described below. All file paths given here are relative to that
-directory of the git repository.
-
-\subsection{Jacobi's Method}
-
-%It should be
-%noted that this method is not the most efficient for solving this problem, especially
-%since the matrix is already tridiagonal. It would be more computationally efficient to
-%use 
-
-Jacobi's method involves applying a series of similarity transformations
-to bring the original symmetric tridiagonal matrix to a diagonal one. At the end
-of this process, we obtain the eigenvalues and eigenvectors. The similarity
-transformation can be interpreted geometrically as a rotation
-about an angle $\theta$ in the n-dimensional Euclidean space. We denote
-such a transformation of the matrix $\mathbf{A}$ into the matrix
-$\mathbf{B}$ as
-
-\begin{equation*}
-	\mathbf{B} = \mathbf{S} ^T \mathbf{A} \mathbf{S}.
-\end{equation*}
-where $\mathbf{S}$ has the form
-
-\begin{equation*}
-	\mathbf{S} = 
-	\begin{bmatrix}1 & 0 & \dots   & 0    & 0  & \dots  & 0 & 0 \\
-                                0 & 1 & \dots & 0    & 0  & \dots     &0 & 0 \\
-			\dots & \dots & \dots & \dots & \dots & \dots & \dots & \dots\\
-                                0 & 0 & \dots & \costa{}  & 0   & \dots & 0 & \sinta{} \\
-			0 & 0 & \dots & 0 & 1 & \dots & 0 & 0 \\
-			\dots & \dots & \dots & \dots & \dots & \dots & \dots & \dots\\
-                                0   & 0 & \dots & 0  & 0  \dots  & 1 & 0\\
-                                0   & 0 & \dots & - \sinta{}  &\dots & \dots & 0 & \costa{}
-	\end{bmatrix}
-	.
-\end{equation*}
-The resulting matrix elements are
-
-\begin{align*}
-	b _{ii}  &= a _{ii}, i \neq k, i \neq l\\
-	b _{ik} &= a _{ik} \cos{\theta} - a _{il} \sin{\theta}, i \neq k, i \neq l\\
-	b _{il}  &= a _{il} \cos{\theta} + a _{ik} \sin{\theta}, i \neq k, i \neq l\\
-	b _{kk} &= a _{kk} \costa{2} - 2 a_{kl} \costa{} \sinta{} + a _{ll} \sinta{2}\\
-	b _{ll}  &= a _{ll} \costa{2} + 2 a _{al} \costa{} \sinta{} + a _{kk} \sinta{2}\\
-	b _{kl} &= (a _{kk} - a _{ll} ) \costa{} \sinta{} + a _{kl} (\costa{2} - \sinta{2} )
-\end{align*}
-where $\theta$ for each transformation is chosen such that the off diagonal $b _{kl}$
-is zero. We re-write this condition with the abbreviations $t = \tan{\theta}$ and the
-definition
-
-\begin{equation*}
-	\tau = \frac{a _{ll} - a _{kk}}{2 a _{kl}}
-\end{equation*}
-as
-
-\begin{equation*}
-	t ^2  + 2 \tau t - 1 = 0
-\end{equation*}
-which has solutions
-
-\begin{equation*}
-	t = - \tau \pm \sqrt{1 + \tau ^2}.
-\end{equation*}
-Now, from $\costa{2} + \sinta{2} = 1$ we can write
-
-\begin{equation*}
-	\costa{} = \frac{1}{ \sqrt{1 + t ^2}}
-\end{equation*}
-from which we can get $\sinta{} = t \costa{}$.
-
-With this procedure for zeroing an off-diagonal matrix element, we can generate
-a recipe for iteratively diagonalizing any symmetric matrix:
-
-\begin{enumerate}
-	\item Set some numerical limit that determines when the matrix elements
-	are small enough to be effectively zero (e.g. \pwrten{-8})
-	\item Find the largest matrix element
-	\item Compute $\tau,t,\costa{},\sinta{}$ that will zero this matrix element
-	\item Apply the similarity transformation defined in the previous step to the
-	matrix to obtain a transformed matrix
-	\item Repeat the previous three steps until all matrix elements are less than
-	the limit set in the first step
-\end{enumerate}
-
-\subsection{Implementing Jacobi's method}
-
-We implemented Jacobi's method in a C++ function that performs the steps listed
-in the previous section. This function sets the limit from step one in the previous
-section to \pwrten{-8} as well as a limit on the maximum number of iterations ($N^3$,
-where $N$ is the dimensionality of the matrix) in case the off-diagonal limit
-isn't satisfied. We then, loop until one of these conditions is met. For each iteration,
-the function \texttt{FindMaxOffDiag} searches the current version of the matrix for
-the largest off diagonal matrix and \texttt{Rotate} computes $\theta$ then applies
-similarity transformation. The similarity transformation of each iteration is also applied
-to a second $N \times N$ matrix that was initialized to the $N$-dimensional identity
-matrix. This allows us to
-obtain the eigenvectors. After the loop is complete, the original tridiagonal matrix
-has been transformed into a diagonal matrix with the eigenvalues along the main
-diagonal. One final loop over the main diagonal is performed to find the lowest
-eigenvalue which is printed out along with its index. We use the index to extract
-the corresponding eigenvector from the eigenvector matrix.
-
-
- 
-\subsection{Unit Tests}
-During development of our code, we implemented a series of unit tests to verify that
-we were coding the algorithm correctly. The first test was to ensure that we setup
-the tridiagonal matrix correctly. The function \texttt{SetMatrix} generates a matrix
-of the specified dimension and \rhomax. We wrote this matrix out to a file
-\texttt{Benchmark/test0.out} that was used as input to a Python script that employs
-the \texttt{numpy.linalg.eigvals} solver to find the eigenvalues. In this way, we verified
-that the non-interacting matrix was being properly set up by checking that the lowest
-eigenvalues were approximately the analytic HO eigenvalues (3,7,11,15,...). This test
-was implemented via the \texttt{test0} function in \texttt{src/proj2.cc}.
-
-The second test checked that the search for the largest off-diagonal matrix element
-works properly. In this simple test, we set up a $4 \times 4$ matrix and initialize a
-few of the off-diagonal elements to random values. We then run the \texttt{FindMaxOffDiag}
-function on this matrix and ensure that it returns the proper element. Furthermore, we
-checked that the larget off-diagonal element was chosen based on the absolute value
-of the element. This test was coded in the \texttt{test1} function in \texttt{src/proj2.cc}.
-
-Our third unit test checked the Jacobi solver results against the output from 
-\texttt{numpy.linalg.eigvals} for simple $3 \times 3$ and $4 \times 4$ matrices stored in the
-files \texttt{Benchmark/test2\_3.in} and \texttt{Benchmark/test2\_4.in} respectively. The
-function \texttt{test2} in \texttt{src/proj2.cc} reads in one of these matrices, applys the
-Jacobi algorithm and checks that the eigenvectors are orthogonal.
-
-The next test we performed checked that our code calculates eigenfunctions that make
-sense physically. We ran the Jacobi algorithm with 50 gridpoints and $\rhomax=5$ to
-check the radial behavior of the first three eigenfuctions - see FIG.~\ref{fig:NIwvfn}.
-There are $n$ nodes in the radial wavefunctions (see eq.~\ref{eq:enl}) and the
-wavefunctions extend farther from 0 for higher eigenenergies. These trends are clearly
-visible in FIG.~\ref{fig:NIwvfn}. 
-
-A final test we implemented checks the orthogonality of the eigenfunctions resulting from
-the diagonalization. We showed in a preceeding section that the orthogonality of a basis set
-is maintained under similarity transformations. Since Jacobi's method is essentially a series of
-similarity transformations and since the same similarity transformations are applied to a set
-of orthonormal unit vectors to generate the eigenvectors (see preceeding section), the resulting
-eigenvectors should be orthogonal. To check this, we compute the dot product between the
-resulting eigenvectors and write out a warning if it is greater than \pwrten{-8}.
-
-%\begin{figure}
-%\centering
-%	\includegraphics[width=0.5\textwidth]{figures/NIwvfn.pdf}
-%	\caption{The square modulus of the ground state (blue) and first two excited state (red and
-%	green) wavefunctions with computed with $N=50, \rhomax=5$.}
-%	\label{fig:NIwvfn}
-%\end{figure}
-
-
-\section{Results and discussions}
-
-\subsection{The non-interacting case}
-
-We tested how many grid points and what values for \rhomax give
-the correct results for the lowest three eigenvalues to four decimal places.
-The results are summarized in Table~\ref{tab:NRhoResults}. A
-$\rhomax = 5$ appears to be large enough to give correct predictions
-for the first three eigenvalues. This can also be seen in FIG.~\ref{fig:NIwvfn}
-where all three wavefunctions go to zero before \rhomax is reached.
-In order to attain the desired four-decimal
-place precision, we increased the number of grid points to 500. In general,
-both \rhomax and the number of grid points contribute to the accuracy of
-the numerical eigenvalues since together they determine the how close
-the calculation approaches the continuous case (how fine-grained the grid is).
-To accurately reproduce the higher
-eigenenergies, we need a larger \rhomax to ensure that the boundary
-condition $u(\rhomax)=0$ is satisfied for the more extended
-wavefunctions. If we only care about the the
-lowest eigenenergies, we can keep \rhomax small for the same number
-of grid points and achieve a better approximation to the continuous
-case.
-
-In TABLE~\ref{tab:w} we list the simulation parameters ($N,\rhomax$)
-and the ground state eigenenergy for different oscillator strengths ($\omega$).
-In general, the smaller ($\omega$) the shallower the oscillator potential which
-shifts the eigenenergies lower. This also makes the wavefunctions more diffuse
-and requires a larger \rhomax to ensure that the upper boundary condition is
-satisfied. We varied $N$ and \rhomax until the ground state energy converged.
-TABLE~\ref{tab:w} shows that for the shallowest oscillator potential ($\omega = 0.01$)
-a large \rhomax is needed to capture the ground state wavefunction. For the
-other three cases, $\rhomax=5$ was sufficient. The ground state wavefunctions
-with different $\omega$ are plotted in FIG.~\ref{fig:gsw}. Note that the extent of
-the ground state wavefunction increases with decreasing $\omega$.
-
-%% Compare Jacobi solver to python implementation run times %%
-
-\begin{table}[h]
+\begin{table}
 \centering
-	\begin{tabular}{ c c | c c c | c }
-	 & & \multicolumn{3}{c}{$2 E_i = 4i + 3$} &\\
+	\begin{tabular}{ c | c c | c c c }
+	Method & Step Size [yr] & Runtime [s] & $\Delta T$ & $\Delta U$ & $\Delta L$\\
 \hline
-%	 &  & $2E_1$ & $2E_2$ & $2E_3$ &\\
-	 & & 3 & 7 & 11 & \\
+	\multirow{4}{*}{Euler} & 0.001 & 1.2e-3 & 1.9e-5 & 7.7e-5 & -1.39\\
+	                                     & 0.01   & 1.0e-4  & 3.1e-5 & 1.4e-4 & -4.36\\
+	                                     & 0.1     & 1.3e-5  & 3.1e-5 & 2.3e-4 & -8.6\\
+	                                      & 1.0     & 3e-6    & -2.3e-3 & 2.3e-4 & -2.9e2\\
 \hline
-	\multicolumn{6}{c}{Numerical Results}\\
+	\multirow{4}{*}{Verlet} & 0.001 & 2.9e-3 & 7.4e-7 & 1.5e-6 & -5.3e-15 \\
+	                                       & 0.01   & 3.0e-4 & 9.1e-7 & 1.8e-6 & -6.2e-15\\
+	                                       & 0.1     & 3.0e-5 & 1.2e-5 & 2.6e-5 & 9.8e-15\\
+	                                       & 1.0     & 4.0e-6 & -5.8e-4 & 2.4e-4 & -1.9e-14\\
 \hline
-	$N$ & \rhomax & $2E_1$ & $2E_2$ & $2E_3$ & \# iterations\\
-\hline
-	20  & 5  & 2.980329 & 6.900902 & 10.752631 & 609\\
-	50  & 5  & 2.996871 & 6.984340 & 10.961832 & 4047\\
-	100 & 5 & 2.999219 & 6.996093 & 10.990595 & 16532\\
-	200 & 5 & 2.999805 & 6.999025 & 10.997780 & 66618\\
-	500 & 5 & 2.999969 & 6.999846 & 10.999802 & 421903\\
-\hline
-	50   & 10 & 2.987443 & 6.936917 & 10.845289 & 3681\\
-	100 & 10 & 2.996871 & 6.984339 & 10.961741 & 15522\\
-	200 & 10 & 2.999219 & 6.996092 & 10.990460 & 64026\\
-\hline
-	50   & 15 & 2.971582 & 6.856332 & 10.645120 & 2718\\
-	100 & 15 & 2.992951 & 6.964661 & 10.913531 & 14312\\
-	200 & 15 & 2.998241 & 6.991200 & 10.978512 & 61378\\
 	\end{tabular}
-	\caption{Lowest three eigenvalues for different values of
-	$N$ and \rhomax. The first two lines give the analytic
-	formula and the corresponding values for the first three
-	eigenenergies of the harmonic oscillator potential.}
-	\label{tab:NRhoResults}
+	\caption{Results of comparing the Euler and Verlet methods for the Sun-
+	Earth system. The last three columns give the change (initial minus final)
+	in the system kinetic energy, potential energy and angular momentum,
+	respectively.}
+	\label{tab:EVresults}
 \end{table}
+
+
+
+\subsection*{Escape Velocity}
+
+We used our system and planet classes to determine the initial velocity needed
+for a planet to escape the gravitational influence of the sun. To do this, we set
+up a simple system with the Sun at rest at the origin and an arbitrary mass at 1
+AU along $y$ with some initial velocity in the $-x$ direction. We calculated the
+potential and kinetic energies for the planet, check the relationship KE $+$ PE
+$< 0$ then incriment the starting velocity if this condition holds. We found that
+an initial velocity of 8.9 AU/yr results in the planet's escape. This agrees with
+the analytic result derived from the relationship mentioned earlier in this section:
+
+\begin{align*}
+	T + U &< 0\\
+	\frac{1}{2} m v^2 &< \frac{ GM_{\odot} m}{r}\\
+	v &< \sqrt{2GM_{\odot}/r}\\
+	 &< \sqrt{8} \pi \approx 8.89, r=1 \mathrm{AU}
+\end{align*}
+
+\subsection*{The three body system}
+
+Next, we modeled the three body Sun-Earth-Jupiter system and explored how
+the third mass influences the planetary orbits. For this simulation, the Sun was
+positioned at the origin at rest. The Earth and Jupiter were placed at 1 and 5.45
+AU repectively along the $y$ axis. The planets' velocities were set according
+to the magnitude of the velocity vectors obtained from \citep{nasa}. We tested
+four different step sizes and found that for step sizes $\sim$ 1 year the discretization
+becomes too crude to accurately model the system (see Table~\ref{tab:sejtest} and
+the associated figures).
+
+Next, we varied the Jovian mass to explore its effect on Earth's orbit. Using the
+0.001 year step size, we ran our simulation with Jupiter's mass set to 10 and then 1000
+times its actual value. The resulting orbits are shown in FIG.~\ref{fig:seJ10} and
+FIG.~\ref{fig:seJ1000} where it is apparent that a Jupiter with roughly 1 solar mass would
+force Earth into a collision with the Sun or eject it from the solar system in less than
+20 years. For the $10M _J$ case, we ran our simulations for times up to 2000 years
+and both orbits remained stable over this time.
+
+We then included the motion of the sun about the three-body system's center
+of mass. For this simulation, we calculated the total momentum of the Earth-
+Jupiter system and gave the Sun a velocity to zero the total momentum of the
+three body system; the resulting orbit is shown in FIG.~\ref{fig:sejfinal}. The
+center of mass isn't perfectly stationary suggesting that the velocity we set for
+the sun overcompensates for the planets' momenta and the whole system drifts
+in the $+x$ direction. However, the simulated orbits are still stable.
+
+\begin{figure}
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/seJ10.pdf}
+	\caption{Simulated three-body orbits with Jupiter's mass increased by a
+	factor of 10.}
+	\label{fig:seJ10}
+\end{figure}
+
+\begin{figure}
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/seJ1000.pdf}
+	\caption{Simulated three-body orbits with Jupiter's mass increased by a
+	factor of 1000.}
+	\label{fig:seJ1000}
+\end{figure}
+
+\begin{figure}
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/sejFinal.pdf}
+	\caption{Simulated three-body orbits about the center of mass.}
+	\label{fig:sejfinal}
+\end{figure}
+
+\begin{table}[h!]
+\centering
+	\begin{tabular}{ c c | c c c }
+	Time [yr] & Step Size [yr] & Runtime [s] & Result & Figure\\
+\hline
+	20    & 0.001 & 0.019 & stable & \ref{fig:sej20}\\
+	200   & 0.01 & 0.017 & stable & \ref{fig:sej200}\\
+	2000 & 0.1 & 0.017 & stable & \ref{fig:sej2000}\\
+	20000& 1.0& 0.032 & unstable & \ref{fig:sej20000}\\
+\hline
+	\end{tabular}
+	\caption{Results of a stability test of the Verlet algorithm for the
+	three body system. For each run, the number of steps is kept
+	constant at 20000.}
+	\label{tab:sejtest}
+\end{table}
+
+
+
+\subsection*{The solar system}
+
+Finally, we simulated the full solar system with all nine planets over a period of 300
+years, and a time step size of 0.001 years. We used the full position and velocity
+vectors from \citep{nasa} to initialize the system and we ran the simulation for all
+three dimensions. The resulting plots are separated according to the inner four and
+outer five planets for ease of viewing (FIG.~\ref{fig:ssi}, FIG.~\ref{fig:sso}).
+
+\subsection*{Precession of the Perihelion of Mercury}
+
+We specialized our Verlet algorithm for the Mercury-Sun system to study the
+precession of the perihelion of Mercury's orbit. This observed precession was
+unable to be accounted for by purely Newtonian effects. It was not until Einstein
+formulated General Relativity and applied it to this problem that the $43''$ per
+century discrepancy between the Newtonian predicted precession and the
+observed precession was resolved.
+
+In our attempt to model this phenomenon, we included a relativistic correction
+to the gravitational force
+
+\begin{equation*}
+F_G = \frac{GM_\mathrm{Sun}M_\mathrm{Mercury}}{r^2}\left[1 + \frac{3l^2}{r^2c^2}\right]
+\end{equation*}
+and ran a simulation of the Mercury-Sun system over 100 years starting Mercury at perihelion
+and placing the Sun at the origin at rest. In order to select the proper time
+step size, we ran a series of simulations without the relativistic correction, decrimenting
+the time step size until the perihelion precession was $\sim \pwrten{-4}$ after a century.
+This occurred for $\Delta t = \pwrten{-6}$ (see \texttt{Benchmark/NoHgPrecess.out}.
+We then added the relativistic correction and observed a precession of 0.25 degrees over
+100 years (see \texttt{Benchmark/HePrecess.out} - this is roughly 20 times $43''$.
+Unfortunately, we were unable to find the source of this error.
+
+
+
+\begin{figure}
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/SSinner.pdf}
+	\caption{The inner solar system.}
+	\label{fig:ssi}
+\end{figure}
+
+\begin{figure}
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/SSouter.pdf}
+	\caption{The outer solar system.}
+	\label{fig:sso}
+\end{figure}
 
 %\begin{figure}
 %\centering
@@ -506,34 +379,6 @@ the ground state wavefunction increases with decreasing $\omega$.
 %	\label{fig:dnit}
 %\end{figure}
 
-\begin{table}
-\centering
-	\begin{tabular}{ c | c c c }
-	$\omega$ & $N$ & \rhomax & $E_0$\\
-\hline
-	\multirow{6}{*}{0.01} & 100 & 10 & 0.0996\\
-	        & 150 & 15 & 0.0496\\
-	        & 200 & 20 & 0.0351\\
-	        & 250 & 25 & 0.0399\\
-	        & 250 & 50 & 0.0299\\
-	        & 250 & 100&0.0299\\
-\hline
-	\multirow{4}{*}{0.5} & 100 & 10 & 1.4992\\
-				     & 150 & 15 & 1.4992\\
-				     &  50  & 5   & 1.4994\\
-				     & 250 & 5   & 1.5002\\
-\hline
-	1.0 & 100 & 10 & 2.9969\\
-\hline
-	\multirow{3}{*}{5.0} & 100 & 10 & 14.9214\\
-	      & 100 & 5   & 14.9884\\
-	      & 250 & 5   & 14.9969
-	\end{tabular}
-	\caption{Ground state eigenenergies for different combinations of
-	($N,\rhomax$) and different oscillator strengths ($\omega$) to check
-	for convergence of $E_0$ for the different $\omega$ (non-interacting case).}
-	\label{tab:w}
-\end{table}
 
 %\begin{figure}
 %\centering
@@ -552,71 +397,7 @@ the ground state wavefunction increases with decreasing $\omega$.
 %\label{fig:n10points}
 %\end{figure}
 
-\subsection{The Coulomb interaction}
 
-We changed the potential to include the Coulomb interaction between the two electrons
-as described above.
-This problem is more difficult to solve analytically but it has been done for certain oscillator
-frequencies - see \citet{Taut1993}. We compare our results to these analytic results in
-TABLE~\ref{tab:wrc}. We then ran our simulation for $\omega_r = 0.01,0.5,1.0,5.0$.
-The simulation parameters and ground state eigenenergies are listed in TABLE~\ref{tab:ci}
-and the wavefunctions are plotted in FIG.~\ref{fig:ci}.
-
-We find that the ground state eigenenergies are higher than the non-interacting case,
-this is due to the additional Coulomb interaction energy. Furthermore, FIG.~\ref{fig:ci}
-shows that the relative distance between the two electrons increases as the oscillator strength
-is increased. This is somewhat counter-intuitive since the oscillator strength may be loosely
-interpreted as the degree of confinement for the two-electron system. However, taking into
-account the fact that it is the relative separation being plotted (the oscillator strength is
-divided out in the definition of $\alpha$) we interpret this effect as the increasing influence
-of the Coulomb repulsion as the electrons become more tightly confined.
-
-\begin{table}
-\centering
-	\begin{tabular}{ c | c c | c c | c }
-	$\omega_r$ & $N$ & \rhomax & $E_0$ (this work) & $E_0$ from \citep{Taut1993} & \# iterations\\
-\hline
-	\multirow{4}{*}{0.25} & 200 &   5 &  1.3066 & \multirow{4}{*}{1.25} & 67116\\
-				         & 200 & 10 &  1.2499 &                                      & 65222\\
-				         & 200 & 20 &  1.2498 &                                      & 62322\\
-				         & 400 & 20 &  1.2499 &                                      & 253817\\
-\hline
-	\multirow{3}{*}{0.05} & 200 & 10 &  0.3950 & \multirow{3}{*}{0.35} & 65508\\
-				         & 200 & 20 & 0.3499  &                                      & 63684\\
-				         & 400 & 20 & 0.3499  &                                      & 257392 
-	\end{tabular}
-	\caption{Numerical estimates for the eigenenergies compared to the analytic results
-	for two specific oscillator frequencies. The simulation parameters $N$ and \rhomax
-	were changed until the eigenenergies converged to the analytic values.}
-	\label{tab:wrc}
-\end{table}
-
-\begin{table}
-\centering
-	\begin{tabular}{ c | c c c | c }
-	$ \omega _r $ & $N$ & \rhomax & $E_0$ & \# iterations\\
-\hline
-	\multirow{6}{*}{0.01} & 400 & 200 & 0.1058 & 220550\\
-				     & 800 & 100 & 0.1058 & 970300\\
-				     & 400 & 100 & 0.1058 & 238187\\
-				     & 400 &  50  & 0.1058 & 248626\\
-				     & 50   &  50  & 0.1058 & 3655\\
-				     & 50   &  10  & 0.3034 & 3655\\
-				     & 50   &    5  & 0.8159  & 4110\\
-\hline
-	\multirow{2}{*}{0.5}   & 400  & 50  & 2.2289   & 196727\\
-				     & 800 & 100 & 2.2289   & 416090\\
-\hline
-	\multirow{2}{*}{1.0}  & 400  & 50  & 4.0527   & 111368\\
-				    & 800  & 100& 4.0527   & 171271\\
-\hline
-	\multirow{2}{*}{5.0}  & 400  & 50  & 17.3195 & 16217\\
-				    & 800  & 100& 17.3195 & 22457
-	\end{tabular}
-	\caption{Simulation parameters and ground state eigenenergies for
-	two electrons in a harmonic oscillator potential.}
-	\label{tab:ci}
-\end{table}
 
 %\begin{figure}[h!]
 %\centering
@@ -628,14 +409,98 @@ of the Coulomb repulsion as the electrons become more tightly confined.
 
 \section{Conclusions}
 
-We have applied Jacobi's method to solve the two-body Schr\"{o}dinger
-equation for electrons in a harmonic oscillator potential. We tested the C++ code
-developed to model this system and found it in good agreement with analytic
-results for both the non-interacting and Coulomb interacting cases. 
+We have applied Euler's method and the velocity Verlet algorithm to
+model the gravitational interaction of planetary bodies. We developed
+two C++ classes to run these simulations. In a comparison of the two
+algorithms, we found that the Verlet method produces stable
+orbits and gives a better approximation to energy and angular momentum
+conservation than Euler's method. We tested our Verlet code by
+simulating the orbital dynamics for a two-body Earth-Sun system
+and a three body Earth-Jupiter-Sun system. We found that a step size
+of 0.001 years is sufficient to model these systems over a 20 year period.
+We also studied the effect of increasing Jupiters mass on the Earth's orbit
+for the three body system. We found that Earth's orbit is severely altered
+for a Jupiter mass $\sim 1 M_{\odot}$. Finally, we simulated the full solar
+system in three dimensions over a 300 year period including gravitational
+interactions between all the planets.
 
 %\begin{thebibliography}{99}
 %%\bibitem{miller2006} G.~A.~Miller, A.~K.~Opper, and E.~J.~Stephenson, Annu.~Rev.~Nucl.~Sci.~{\bf 56}, 253 (2006).
 %\end{thebibliography}
+
+\clearpage
+
+%\section*{Figures}
+
+\begin{figure}
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/sej20.pdf}
+	\caption{Earth and Jupiter orbits produced in the three-body
+	simulation with a 0.001 years step size. We note that this
+	same plot is produced regardless of the final time as long
+	as number of steps is set such that the step size is 0.001 years
+	and the final time is chosen
+	to be longer than one Jovian orbital period (11.86 years).}
+	\label{fig:sej20}
+\end{figure}
+
+\begin{figure}
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/sej200.pdf}
+	\caption{Earth and Jupiter orbits produced in the three-body
+	simulation with a 0.01 years step size.}
+	\label{fig:sej200}
+\end{figure}
+
+\begin{figure}
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/sej2000.pdf}
+	\caption{Earth and Jupiter orbits produced in the three-body
+	simulation with a 0.1 years step size.}
+	\label{fig:sej2000}
+\end{figure}
+
+\begin{figure}
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/sej20000.pdf}
+	\caption{Earth and Jupiter orbits produced in the three-body
+	simulation with a 1 year step size.}
+	\label{fig:sej20000}
+\end{figure}
+
+\clearpage
+
+\begin{figure}
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/se001.pdf}
+	\caption{Simulated Earth orbits over 10 years using the Euler (blue) and
+	Verlet (red) methods. The time step size is 0.001 years.}
+	\label{fig:se001}
+\end{figure}
+
+\begin{figure}
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/se01.pdf}
+	\caption{Simulated Earth orbits over 10 years using the Euler (blue) and
+	Verlet (red) methods. The time step size is 0.01 years.}
+	\label{fig:se01}
+\end{figure}
+
+\begin{figure}
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/se1.pdf}
+	\caption{Simulated Earth orbits over 10 years using the Euler (blue) and
+	Verlet (red) methods. The time step size is 0.1 years.}
+	\label{fig:se1}
+\end{figure}
+
+\begin{figure}
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/se10.pdf}
+	\caption{Simulated Earth orbits over 10 years using the Euler (blue) and
+	Verlet (red) methods. The time step size is 1 year.}
+	\label{fig:se10}
+\end{figure}
 
 \clearpage
 
