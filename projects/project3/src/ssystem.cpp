@@ -100,7 +100,7 @@ void ssystem::VVerlet(int nsteps,double years,int printNsteps,double epsilon)
     }
 
 //    FileMatrix("../Benchmark/ooSystem.out",Positions,printNsteps,3*total_planets);
-    FileMatrix("../../Benchmark/ooSystem.out",Positions,printNsteps,3*total_planets);
+//    FileMatrix("../../Benchmark/ooSystem.out",Positions,printNsteps,3*total_planets);
 
   }
 

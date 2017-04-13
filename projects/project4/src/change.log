@@ -1,0 +1,7 @@
+> implement periodic boundary conditions
+> remove total momentum:
+	+ add total mass private variable to system
+	+ add total mass calculation function to system
+	+ add system mass getter function
+	* Note: that total mass needs to be recalculated whenever
+	atoms are added or removed
