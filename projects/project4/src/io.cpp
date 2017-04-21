@@ -41,9 +41,23 @@ void IO::saveState(System &system)
         file << "The is an optional comment line that can be empty. The reason we use H is so particles get smaller in Ovito" << endl;
         for(Atom *atom : system.atoms()) {
             file << "H " <<
+	            /* original implementation 
                     UnitConverter::lengthToAngstroms(atom->position.x()) << " " <<
                     UnitConverter::lengthToAngstroms(atom->position.y()) << " " <<
                     UnitConverter::lengthToAngstroms(atom->position.z()) << "\n";
+		    */
+                    UnitConverter::lengthToAngstroms(atom->position.x()) << " " <<
+                    UnitConverter::lengthToAngstroms(atom->position.y()) << " " <<
+                    UnitConverter::lengthToAngstroms(atom->position.z()) << " " <<
+		    UnitConverter::velocityToSI(atom->velocity.length())    << "\n";
+		    /*
+                    UnitConverter::lengthToAngstroms(atom->position.x()) << " " <<
+                    UnitConverter::lengthToAngstroms(atom->position.y()) << " " <<
+                    UnitConverter::lengthToAngstroms(atom->position.z()) << " " <<
+		    UnitConverter::velocityToSI(atom->velocity.x())      << " " <<
+		    UnitConverter::velocityToSI(atom->velocity.y())      << " " <<
+		    UnitConverter::velocityToSI(atom->velocity.z())      << "\n";
+		    */
         }
     }
 }

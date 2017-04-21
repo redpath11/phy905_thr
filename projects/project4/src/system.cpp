@@ -45,9 +45,7 @@ void System::removeTotalMomentum() {
   for(Atom *atom : m_atoms)
   {
     for(int j=0;j<3;j++)
-    { atom->velocity[j]
-      
-    }
+    { atom->velocity[j]; }
   }
 
 }
@@ -56,17 +54,48 @@ void System::createFCCLattice(int numberOfUnitCellsEachDimension, double lattice
     // You should implement this function properly. Right now, 100 atoms are created uniformly placed in the system of size (10, 10, 10).
 
 /*
-    for(int i=0; i<100; i++) {
+//    for(int i=0; i<100; i++) {
         Atom *atom = new Atom(UnitConverter::massFromSI(6.63352088e-26));
         double x = Random::nextDouble(0, 10); // random number in the interval [0,10]
         double y = Random::nextDouble(0, 10);
         double z = Random::nextDouble(0, 10);
         atom->position.set(x,y,z);
         atom->resetVelocityMaxwellian(temperature);
+	atom->velocity.set(0.,0.,100.);
         m_atoms.push_back(atom);
-    }
-    setSystemSize(vec3(10, 10, 10)); // Remember to set the correct system size!
+//    }
 */
+    // First, set up a single cell of four atoms
+    const double b = latticeConstant/2.;
+    const double x[4] = {0.,b ,0.,b };
+    const double y[4] = {0.,b ,b ,0.};
+    const double z[4] = {0.,0.,b ,b };
+    for(int i=0;i<numberOfUnitCellsEachDimension;i++)
+    {// place unit cells along x
+      double bx = ((double) i)*b/2.;
+      for(int j=0;j<numberOfUnitCellsEachDimension;j++)
+      {// place unit cells along y
+        double by = ((double) j)*b/2.;
+	  for(int k=0;k<numberOfUnitCellsEachDimension;k++)
+	  {// place unit cells along z
+	    double bz = ((double) k)*b/2.;
+//            Atom *atom[4];
+            for(int a=0;a<4;a++)
+            {// place 4 atoms
+              Atom *atom;
+              atom = new Atom(UnitConverter::massFromSI(6.63352088e-26));
+              atom->position.set(x[a]+bx,y[a]+by,z[a]+bz);
+              atom->resetVelocityMaxwellian(temperature);
+              m_atoms.push_back(atom);
+            }// END place 4 atoms
+          }// END place unit cells along z
+      }// END place unit cells along y
+    }// END place unit cells along x
+
+    double ssize = ((double) numberOfUnitCellsEachDimension) * latticeConstant;
+    setSystemSize(vec3(ssize, ssize, ssize)); // Remember to set the correct system size!
+//    setSystemSize(vec3(10, 10, 10)); // Remember to set the correct system size!
+
 
 
 }

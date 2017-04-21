@@ -37,7 +37,9 @@ int main(int numberOfArguments, char **argumentList)
     system.potential().setEpsilon(1.0);
     system.potential().setSigma(1.0);
 
-    system.removeTotalMomentum();
+    cout << "System of " << system.getNumberOfAtoms() << " atoms initialized." << endl;
+
+//    system.removeTotalMomentum();
 
     StatisticsSampler statisticsSampler;
     IO movie("movie.xyz"); // To write the state to file
@@ -50,6 +52,7 @@ int main(int numberOfArguments, char **argumentList)
             setw(20) << "TotalEnergy" << endl;
     for(int timestep=0; timestep<1000; timestep++) {
         system.step(dt);
+	system.applyPeriodicBoundaryConditions();
         statisticsSampler.sample(system);
         if( timestep % 100 == 0 ) {
             // Print the timestep every 100 timesteps
@@ -64,6 +67,11 @@ int main(int numberOfArguments, char **argumentList)
     }
 
     movie.close();
+
+/*
+    for(int i=0;i<system.getNumberOfAtoms();i++)
+    { cout << system.m_atoms[i]->position[0] << endl; }
+*/
 
     return 0;
 }

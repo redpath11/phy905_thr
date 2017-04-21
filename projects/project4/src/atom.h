@@ -17,5 +17,6 @@ public:
 
     double mass() { return m_mass; }
     void setMass(double mass) { m_mass = mass; }
+    double distance(Atom *otherAtom);
 };
 #endif

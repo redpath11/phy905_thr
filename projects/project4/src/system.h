@@ -11,13 +11,13 @@ class System
 private:
     vec3 m_systemSize;
     VelocityVerlet m_integrator;
-    std::vector<Atom*> m_atoms;
     LennardJones m_potential;
     double m_time = 0;
     double m_mass = 0;
     int m_steps = 0;
 
 public:
+    std::vector<Atom*> m_atoms;
     System();
     ~System();
     void createFCCLattice(int numberOfUnitCellsEachDimension, double latticeConstant, double temperature);
@@ -34,10 +34,12 @@ public:
     vec3 systemSize() { return m_systemSize; }
     void setSystemSize(vec3 systemSize) { m_systemSize = systemSize; }
     LennardJones &potential() { return m_potential; }
+//    friend void LennardJones::calculateForces(System &system);
     double time() { return m_time; }
     void setTime(double time) { m_time = time; }
     VelocityVerlet &integrator() { return m_integrator; }
     int steps() { return m_steps; }
     void setSteps(int steps) { m_steps = steps; }
+    double getNumberOfAtoms() { return m_atoms.size(); }
 };
 #endif
