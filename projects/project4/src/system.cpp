@@ -21,33 +21,49 @@ System::~System()
 void System::applyPeriodicBoundaryConditions() {
   // Read here: http://en.wikipedia.org/wiki/Periodic_boundary_conditions#Practical_implementation:_continuity_and_the_minimum_image_convention
   // Loop over atoms and check positions relative to system center
+  /**/
   for(Atom *atom : m_atoms)
   {
     for(int j=0;j<3;j++)
     {
-      if(atom->position[j]<-0.5*m_systemSize[j])
-      {atom->position[j]=atom->position[j] + m_systemSize[j];}
-      if(atom->position[j]>=0.5*m_systemSize[j])
-      {atom->position[j]=atom->position[j] - m_systemSize[j];}
+      if(atom->position[j]<0.) {
+        double multiplier = floor(-1.*atom->position[j] / m_systemSize[j]);
+        atom->position[j] += m_systemSize[j] * multiplier;
+        atom->initialPosition[j] += m_systemSize[j]*multiplier;
+      }
+      if(atom->position[j]>=m_systemSize[j]) {
+        double multiplier = floor(atom->position[j] / m_systemSize[j]);
+        atom->position[j]-= m_systemSize[j] * multiplier;
+        atom->initialPosition[j] -= m_systemSize[j] * multiplier;
+      }
     }
   }
+
 }
 
 void System::removeTotalMomentum() {
     // Find the total momentum and remove momentum equally on each atom so the total momentum becomes zero.
-  double Ptotal[3]={0.,0.,0.};
+  vec3 Ptotal = vec3(0,0,0);
+  double Mtotal = 0.;
   for(Atom *atom : m_atoms)
-  {
-    for(int j=0;j<3;j++)
-    { Ptotal[j] += atom->mass()*atom->velocity[j]; }
+  { 
+    Mtotal += atom->mass(); 
+    Ptotal += atom->mass()*atom->velocity;
   }
 
   for(Atom *atom : m_atoms)
   {
-    for(int j=0;j<3;j++)
-    { atom->velocity[j]; }
+    atom->velocity -= Ptotal/Mtotal;
   }
 
+}
+
+void System::removeTotalVelocity() {
+  vec3 Vtotal = vec3(0,0,0);
+//  double natoms = this->getNumberOfAtoms();
+  for(Atom *atom : m_atoms) {Vtotal += atom->velocity;}
+//  Vtotal /= natoms;
+  for(Atom *atom : m_atoms) {atom->velocity -= Vtotal/m_atoms.size();}
 }
 
 void System::createFCCLattice(int numberOfUnitCellsEachDimension, double latticeConstant, double temperature) {
@@ -65,6 +81,12 @@ void System::createFCCLattice(int numberOfUnitCellsEachDimension, double lattice
         m_atoms.push_back(atom);
 //    }
 */
+    double ssize = ((double) numberOfUnitCellsEachDimension) * latticeConstant;
+    double offset = 0.;
+//    double offset = ceil(ssize) - ssize;
+//    ssize = ceil(ssize);
+    setSystemSize(vec3(ssize, ssize, ssize)); // Remember to set the correct system size!
+//    setSystemSize(vec3(10, 10, 10)); // Remember to set the correct system size!
     // First, set up a single cell of four atoms
     const double b = latticeConstant/2.;
     const double x[4] = {0.,b ,0.,b };
@@ -72,19 +94,20 @@ void System::createFCCLattice(int numberOfUnitCellsEachDimension, double lattice
     const double z[4] = {0.,0.,b ,b };
     for(int i=0;i<numberOfUnitCellsEachDimension;i++)
     {// place unit cells along x
-      double bx = ((double) i)*b/2.;
+      double bx = ((double) i)*b*2. + offset;
       for(int j=0;j<numberOfUnitCellsEachDimension;j++)
       {// place unit cells along y
-        double by = ((double) j)*b/2.;
+        double by = ((double) j)*b*2. + offset;
 	  for(int k=0;k<numberOfUnitCellsEachDimension;k++)
 	  {// place unit cells along z
-	    double bz = ((double) k)*b/2.;
+	    double bz = ((double) k)*b*2. + offset;
 //            Atom *atom[4];
             for(int a=0;a<4;a++)
             {// place 4 atoms
               Atom *atom;
               atom = new Atom(UnitConverter::massFromSI(6.63352088e-26));
               atom->position.set(x[a]+bx,y[a]+by,z[a]+bz);
+	      atom->initialPosition.set(x[a]+bx,y[a]+by,z[a]+bz);
               atom->resetVelocityMaxwellian(temperature);
               m_atoms.push_back(atom);
             }// END place 4 atoms
@@ -92,9 +115,6 @@ void System::createFCCLattice(int numberOfUnitCellsEachDimension, double lattice
       }// END place unit cells along y
     }// END place unit cells along x
 
-    double ssize = ((double) numberOfUnitCellsEachDimension) * latticeConstant;
-    setSystemSize(vec3(ssize, ssize, ssize)); // Remember to set the correct system size!
-//    setSystemSize(vec3(10, 10, 10)); // Remember to set the correct system size!
 
 
 

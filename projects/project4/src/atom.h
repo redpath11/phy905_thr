@@ -7,6 +7,7 @@ class Atom
 private:
     float m_mass;
 public:
+    vec3 initialPosition;
     vec3 position;
     vec3 velocity;
     vec3 force;

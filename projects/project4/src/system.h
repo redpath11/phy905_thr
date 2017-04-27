@@ -15,14 +15,15 @@ private:
     double m_time = 0;
     double m_mass = 0;
     int m_steps = 0;
+    std::vector<Atom*> m_atoms;
 
 public:
-    std::vector<Atom*> m_atoms;
     System();
     ~System();
     void createFCCLattice(int numberOfUnitCellsEachDimension, double latticeConstant, double temperature);
     void applyPeriodicBoundaryConditions();
     void removeTotalMomentum();
+    void removeTotalVelocity();
     void calculateForces();
     void calculateMass();
     void step(double dt);

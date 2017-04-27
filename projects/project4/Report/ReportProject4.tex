@@ -1,0 +1,225 @@
+\documentclass[10pt,showpacs,preprintnumbers,footinbib,amsmath,amssymb,aps,prl,twocolumn,groupedaddress,superscriptaddress,showkeys]{revtex4-1}
+\usepackage{graphicx}
+\usepackage{dcolumn}
+\usepackage{bm}
+\usepackage[colorlinks=true,urlcolor=blue,citecolor=blue]{hyperref}
+\usepackage{color}
+\usepackage{amsmath}
+\usepackage{multirow}
+\usepackage{natbib}
+
+\newcommand{\costa}[1]{% \costa{<power>}
+	\ensuremath{\cos ^{#1} {\theta}} }
+\newcommand{\sinta}[1]{% \sinta{<power>}
+	\ensuremath{\sin ^{#1} {\theta}} }
+\newcommand{\pwrten}[1]{%\pwrten{<power>}
+	\ensuremath{10^{#1}} }
+\newcommand{\rhomax}{
+	\ensuremath{ \rho _{\mathrm{max}}} }
+\newcommand{\fourpisqr}{
+	\ensuremath{ 4 \pi ^2} }
+\newcommand{\deriv}[3][]{% \deriv[<order>]{<function>}{<variable>}
+	\ensuremath{ \frac{d ^{#1} {#2}}{d {#3}^{#1}}}}
+
+\begin{document}
+\title{PHY 905 Project 4: Molecular Dynamics}
+\author{Thomas Redpath}
+\affiliation{Department of Physics, Michigan State University}
+\begin{abstract}
+
+\end{abstract}
+\maketitle
+
+\section{Introduction}
+
+Molecular dynamics
+
+
+\section{Theory}
+
+\subsection*{Lennard-Jones Potential}
+
+
+\begin{equation}
+	U(r_{ij}) = 4\epsilon\left[\left(\frac{\sigma}{r_{ij}}\right)^{12} - \left(\frac{\sigma}{r_{ij}}\right)^6\right],
+	\label{eq:lj}
+\end{equation}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.5\textwidth]{figures/LJ.pdf}
+	\caption{The Lennard-Jones potential (blue) and derived force (red).}
+	\label{fig:lj}
+\end{figure}
+
+\subsection*{Units}
+
+The small scale of the system we are simulating lends itself to working in a
+specialized set of units. We used the following four relations to define our
+system of units
+
+\begin{align*}
+	\text{1 unit of mass } &= 1 \text{ a.m.u} = 1.661\times 10^{-27}\mathrm{kg},\\
+	\text{1 unit of length } &= 1.0 {\AA} = 1.0\times 10^{-10}\mathrm{m},\\
+	\text{1 unit of energy } &= 1.651\times 10^{-21}\mathrm{J},\\
+	\text{1 unit of temperature} &= 119.735\mathrm{K}.
+\end{align*}
+Converting to this system of units, Boltzmann's constant becomes
+$k = (1.38 \times \pwrten{-23} )(119.7)(1.65 \times \pwrten{-21}) = 1$.
+
+\section*{Algorithms and Methods}
+
+The C++ code developed for this project utilizes the velocity
+Verlet method to solve Newton's equations of motion. In this section we briefly
+summarize the derivation of this method from \citet{Morten}. We
+then provide a description of the codes which can be
+found at \url{https://github.com/redpath11/phy905_thr} in the
+\texttt{projects/project4/src} directory.
+
+\subsection*{Verlet Method}
+
+We numerically solve the equations of motion using the velocity
+Verlet method. Since we've assumed a Lennard-Jones type
+pairwise interaction between atoms, the form of the acceleration
+is known from the gradient of the interaction potential. The Verlet
+method derives from a summation of two Taylor expansions. Consider
+the position in one dimension
+
+\begin{align*}
+	x(t+h) &= x(t) + h x'(t) + \frac{1}{2} h^2  x''(t) + O(h^3)\\
+	x(t-h) &= x(t)  - h x'(t) + \frac{1}{2} h^2  x''(t) + O(h^3).
+\end{align*}
+Summing these two expansions and switching to the discretized
+notation gives
+
+\begin{equation*}
+	x_{i+1} = 2 x_i - x_{i-1} + h^2 x''_i + O(h^4).
+\end{equation*}
+In general, this algorithm is not self-starting since it requires the
+value of $x$ at two previous points.
+
+Now, consider a Taylor expansion of the velocity and note the
+relationshipe between velocity and acceleration $v' = a$.
+
+\begin{align*}
+	v_{i+t} &= v_i + h v_i ' + \frac{1}{2} v_i '' + O(h^3)\\
+	a_{i+1} &= v'_i + h v''_i + O(h^2).
+\end{align*}
+We will assume that the velocity is a linear function of time
+$hv''_i \approx v'_{i+1} - v'_i$. We can now write the final
+algorithmic form for the position and velocities.
+
+\begin{align}
+%%\begin{split}
+	x_{i+1} &= x_i + hv_i + \frac{h^2}{2} v'_i + O(h^3)\\
+	v_{i+1} &= v_i + \frac{h}{2}(v'_{i+1} + v'_i) + O(h^3)
+\label{eq:Verlet}
+%%\end{split}
+\end{align}
+
+\subsection*{Code}
+
+\subsubsection*{Overview}
+
+We were supplied a code skeleton (from
+\url{ https://github.com/andeplane/molecular-dynamics-fys3150})
+ outlining the major classes needed to run a molecular dynamics
+simulation. From this starting point, we filled in details to apply
+periodic boundary conditions, initialize the system of argon
+atoms in face-centered cubic (FCC) lattice, calculate the pairwise
+forces from the Lennard-Jones potential and compute physical
+properites of the system. Figure~\ref{fig:flowchart} gives a
+general overview of the code structure by identifying key
+elements and where they reside in the within the class structure.
+
+\begin{figure*}
+	\includegraphics[width=\textwidth]{figures/flowchart.pdf}
+	\caption{The flowchart gives a crude overview of how the
+	code operates. Blue boxes represent classes and
+	indicate processes carried out by one or more memeber
+	functions. Green boxes represent functions crucial to the 
+	simulation. Black arrows indicate the hierarchy of function
+	calls for one timestep. Orange arrows depict function
+	calls that result in writing data to a file.}
+	\label{fig:flowchart}
+\end{figure*}
+	
+
+\subsubsection*{Initialization}
+
+Initialization of our system takes place in two general steps: (1)
+setting the size, initial temperature and Lennard-Jones potential
+characteristics and (2) setting the initial positions and velocities
+for the atoms. The first step is implemented in the \texttt{main}
+function. The size of the system is determined by the number of
+unit cells in the FCC lattice and the lattice constant (the size of
+one unit cell). We studied a system of argon atoms for which
+the lattice constant is 5.26 {\AA} \textbf{REFERENCE}. The
+$\epsilon,\sigma$ parameters specify the L-J potential.
+
+The second initialization step is carried out in the \texttt{System}
+class. This class contains a function \texttt{System::createFCCLattice}
+to position $4 \times N_x \times N_y \times N_z$ atoms in a lattice and
+give them random velocities drawn from a Maxwell-Boltzmann
+distribution. The \texttt{System::removeTotalVelocity} function
+subtracts the net velocity from each atom so that the center of mass
+of the system is stationary.
+These two functions are called in \texttt{main}.
+
+\subsubsection*{Simulation}
+
+\subsubsection*{Output}
+
+
+\section{Results and discussion}
+
+%\begin{figure}
+%\centering
+%	\includegraphics[width=0.5\textwidth]{figures/dnit2.pdf}
+%	\caption{The number of similarity transformations needed to
+%	diagonalize the matrix is plotted against the matrix
+%	dimensionality. A quadratic fit gives a $2 N^2 - 8 N$ dependence
+%	of the number of similarity transformations on the dimensionality
+%	$N$.}
+%	\label{fig:dnit}
+%\end{figure}
+
+
+%\begin{figure}
+%\centering
+%	\includegraphics[width=0.5\textwidth]{figures/gsw.pdf}
+%	\caption{Ground state wavefunctions for different oscillator
+%	strengths and no interaction between the electrons.
+%	The weakest potential ($\omega = 0.01$) is shown in black and the
+%	strongest potential ($\omega = 5$) is plotted in green.
+%	The wavefunctions have been scaled to the $\omega = 5$ wavefunction.}
+%	\label{fig:gsw}
+%\end{figure}
+
+%\begin{figure}[hbtp]
+%\includegraphics[scale=0.4]{test1.pdf}
+%\caption{Exact and numerial solutions for $n=10$ mesh points.} 
+%\label{fig:n10points}
+%\end{figure}
+
+
+
+%\begin{figure}[h!]
+%\centering
+%	\includegraphics[width=0.5\textwidth]{figures/CIwvfn.pdf}
+%	\caption{Ground state wavefunctions vs. separation distance for two
+%	Coulomb-interacting electrons in a harmonic oscillator potential.}
+%	\label{fig:ci}
+%\end{figure}
+
+\section{Conclusions}
+
+%\begin{thebibliography}{99}
+%%\bibitem{miller2006} G.~A.~Miller, A.~K.~Opper, and E.~J.~Stephenson, Annu.~Rev.~Nucl.~Sci.~{\bf 56}, 253 (2006).
+%\end{thebibliography}
+
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\end{document}

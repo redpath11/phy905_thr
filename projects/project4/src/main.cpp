@@ -34,12 +34,18 @@ int main(int numberOfArguments, char **argumentList)
 
     System system;
     system.createFCCLattice(numberOfUnitCells, latticeConstant, initialTemperature);
-    system.potential().setEpsilon(1.0);
-    system.potential().setSigma(1.0);
+    // Set for argon
+//    system.potential().setEpsilon(UnitConverter::temperatureFromSI(119.8));
+    system.potential().setEpsilon(UnitConverter::energyFromSI(UnitConverter::kb*119.8));
+    system.potential().setSigma(UnitConverter::lengthFromAngstroms(3.405));
+    cout << "epsilon = " << system.potential().epsilon() << endl;
+    cout << "sigma = " << system.potential().sigma() << endl;
 
     cout << "System of " << system.getNumberOfAtoms() << " atoms initialized." << endl;
 
-//    system.removeTotalMomentum();
+    /* Remove net velocity */
+//    system.removeTotalMomentum();// use this if the system contains different types of atoms
+    system.removeTotalVelocity();// use this if the system contains just one type of atoms
 
     StatisticsSampler statisticsSampler;
     IO movie("movie.xyz"); // To write the state to file
@@ -50,21 +56,27 @@ int main(int numberOfArguments, char **argumentList)
             setw(20) << "KineticEnergy" <<
             setw(20) << "PotentialEnergy" <<
             setw(20) << "TotalEnergy" << endl;
-    for(int timestep=0; timestep<1000; timestep++) {
+
+/**/
+    for(int timestep=0; timestep<500; timestep++) {
+//        cout << " ----- Step: " << timestep << " ----- " << endl << endl;
         system.step(dt);
 	system.applyPeriodicBoundaryConditions();
         statisticsSampler.sample(system);
+	statisticsSampler.saveToFile(system);
         if( timestep % 100 == 0 ) {
             // Print the timestep every 100 timesteps
             cout << setw(20) << system.steps() <<
                     setw(20) << system.time() <<
-                    setw(20) << statisticsSampler.temperature() <<
+//                    setw(20) << statisticsSampler.temperature() <<
+                    setw(20) << UnitConverter::temperatureToSI(statisticsSampler.temperature()) <<
                     setw(20) << statisticsSampler.kineticEnergy() <<
                     setw(20) << statisticsSampler.potentialEnergy() <<
                     setw(20) << statisticsSampler.totalEnergy() << endl;
         }
         movie.saveState(system);
     }
+
 
     movie.close();
 
