@@ -1,5 +1,6 @@
 \documentclass[10pt,showpacs,preprintnumbers,footinbib,amsmath,amssymb,aps,prl,twocolumn,groupedaddress,superscriptaddress,showkeys]{revtex4-1}
 \usepackage{graphicx}
+\usepackage{subcaption}
 \usepackage{dcolumn}
 \usepackage{bm}
 \usepackage[colorlinks=true,urlcolor=blue,citecolor=blue]{hyperref}
@@ -66,6 +67,8 @@ system of units
 \end{align*}
 Converting to this system of units, Boltzmann's constant becomes
 $k = (1.38 \times \pwrten{-23} )(119.7)(1.65 \times \pwrten{-21}) = 1$.
+
+\subsection*{Thermodynamic quantities}
 
 \section*{Algorithms and Methods}
 
@@ -159,19 +162,100 @@ $\epsilon,\sigma$ parameters specify the L-J potential.
 
 The second initialization step is carried out in the \texttt{System}
 class. This class contains a function \texttt{System::createFCCLattice}
-to position $4 \times N_x \times N_y \times N_z$ atoms in a lattice and
-give them random velocities drawn from a Maxwell-Boltzmann
-distribution. The \texttt{System::removeTotalVelocity} function
-subtracts the net velocity from each atom so that the center of mass
-of the system is stationary.
-These two functions are called in \texttt{main}.
+to position $4 \times N_x \times N_y \times N_z$ atoms in a cubic lattice
+and give them random velocities drawn from a Maxwell-Boltzmann
+distribution (eq.~\ref{eq:MBdist}). Doing so gives the system some
+initial kinetic energy (i.e. temperature). It should be noted that this
+does not generate a system
+in equilibrium, but rather it populates some random microstate with a
+random initial kinetic energy. The \texttt{System::removeTotalVelocity}
+function subtracts the net velocity from each atom so that the center of
+mass of the system is stationary.
+
+\begin{equation}
+	P(v_i) = \sqrt{\frac{m}{2 \pi k T}} \exp \left [ \frac{-m v_i ^2}{2kT} \right ]
+	\label{eq:MBdist}
+\end{equation}
+
+An initialized system consisting of 500 atoms (5 unit cells) is shown in FIG.
+~\ref{fig:init300K}. We used Ovito to visualize the system.
+
+Density?
+
+\begin{figure}
+\centering
+	\begin{subfigure}[b]{0.5\textwidth}
+	\centering
+		\includegraphics[width=\textwidth]{figures/Init300Kxy.png}
+		\caption{Top view}
+		\label{fig:init300kxy}
+	\end{subfigure}
+\\
+	\begin{subfigure}[b]{0.5\textwidth}
+	\centering
+		\includegraphics[width=\textwidth]{figures/Init300K3d.png}
+		\caption{3d view}
+		\label{fig:init300k3d}
+	\end{subfigure}
+	\caption{Positions and velocity magnitudes (indicated by the color)
+	visualized in Ovito for the system initial state.}
+	\label{fig:init300K}
+\end{figure}
 
 \subsubsection*{Simulation}
+
+Melting point?
+
+
 
 \subsubsection*{Output}
 
 
-\section{Results and discussion}
+
+\section*{Results and discussion}
+
+\subsection*{Energy Conservation}
+
+Our first test of the simulation was to ensure that energy conservation
+is obeyed. This test revealed a major bug in the way we were applying
+the periodic boundary conditions. When this is not done correctly, the
+potential energy and forces are incorrectly calculated because the
+distances between atoms is wrong. Once this issue was resolved, we
+obtained the results shown in Table~\ref{tab:dt14eV} for a simulation
+of 1000 time steps and an initial temperature of 300 K.
+
+\input{dt14eV}
+
+\subsection*{Equillibrium Temperature}
+
+In a preceeding section about initializing the simulation, we mentioned
+that the ``initial'' temperature we set is not the actual temperature of the
+system but rather a way to set the total energy of the system; we will
+discuss this further. When we randomly assign velocities to each atom,
+we are starting the system in a random one of its virtually uncountable
+microstates. Through simulating the interactions between atoms, we
+evolve the system through other microstates at each time step according
+to the true probabilities of those microstates given by the ensemble.
+
+
+%states that the time spent by
+%a system in some region of the phase space containing microstates with
+%the same energy is proportionaly to the volume of this region.
+
+Ti over T0
+
+\begin{figure}
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/TempSteps.pdf}
+	\caption{The top panel plots calculated system temperature vs.
+	time step
+	number for starting temperatures $T_0$ ranging from 200 to 800
+	K (the different lines). The bottom panel presents the same data
+	as the top panel but with the temperature at each step normalized
+	by the $T_0$ for that simulation. For all the simulations, the
+	equillibrium temperature is roughly half the initial temperature.}
+	\label{fig:tempsteps}
+\end{figure}
 
 %\begin{figure}
 %\centering
