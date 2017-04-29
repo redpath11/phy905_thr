@@ -70,11 +70,24 @@ $k = (1.38 \times \pwrten{-23} )(119.7)(1.65 \times \pwrten{-21}) = 1$.
 
 \subsection*{Thermodynamic quantities}
 
+Temperature
+\begin{equation}
+	T = \frac{2}{3}\frac{E_k}{N_\text{atoms} k_B}.
+	\label{eq:temperature}
+\end{equation}
+
+Diffusion constant
+\begin{equation}
+	D = \frac{\langle r^2(t) \rangle }{6t}
+	\label{eq:diffusion}
+\end{equation}
+
+
 \section*{Algorithms and Methods}
 
 The C++ code developed for this project utilizes the velocity
 Verlet method to solve Newton's equations of motion. In this section we briefly
-summarize the derivation of this method from \citet{Morten}. We
+summarize the derivation of this method discussed in \citet{Morten}. We
 then provide a description of the codes which can be
 found at \url{https://github.com/redpath11/phy905_thr} in the
 \texttt{projects/project4/src} directory.
@@ -158,13 +171,22 @@ function. The size of the system is determined by the number of
 unit cells in the FCC lattice and the lattice constant (the size of
 one unit cell). We studied a system of argon atoms for which
 the lattice constant is 5.26 {\AA} \textbf{REFERENCE}. The
-$\epsilon,\sigma$ parameters specify the L-J potential.
+$\epsilon,\sigma$ parameters specify the L-J potential, for argon
+these are $\epsilon / k_B = 119.8\mathrm{K}$, $ \sigma=3.405
+{\AA}$.
 
 The second initialization step is carried out in the \texttt{System}
 class. This class contains a function \texttt{System::createFCCLattice}
 to position $4 \times N_x \times N_y \times N_z$ atoms in a cubic lattice
 and give them random velocities drawn from a Maxwell-Boltzmann
-distribution (eq.~\ref{eq:MBdist}). Doing so gives the system some
+distribution.
+% (eq.~\ref{eq:MBdist}).
+
+\begin{equation*}
+	P(v_i) = \sqrt{\frac{m}{2 \pi k T}} \exp \left [ \frac{-m v_i ^2}{2kT} \right ]
+%	\label{eq:MBdist}
+\end{equation*}
+Doing so gives the system some
 initial kinetic energy (i.e. temperature). It should be noted that this
 does not generate a system
 in equilibrium, but rather it populates some random microstate with a
@@ -172,13 +194,8 @@ random initial kinetic energy. The \texttt{System::removeTotalVelocity}
 function subtracts the net velocity from each atom so that the center of
 mass of the system is stationary.
 
-\begin{equation}
-	P(v_i) = \sqrt{\frac{m}{2 \pi k T}} \exp \left [ \frac{-m v_i ^2}{2kT} \right ]
-	\label{eq:MBdist}
-\end{equation}
-
 An initialized system consisting of 500 atoms (5 unit cells) is shown in FIG.
-~\ref{fig:init300K}. We used Ovito to visualize the system.
+~\ref{fig:init300K}. We used Ovito \citep{ovito} to visualize the system.
 
 Density?
 
@@ -203,6 +220,15 @@ Density?
 \end{figure}
 
 \subsubsection*{Simulation}
+
+general flow
+
+how observables are sampled; mention that $D$ is calculated for every
+step
+
+efficiency
+
+
 
 Melting point?
 
@@ -230,32 +256,145 @@ of 1000 time steps and an initial temperature of 300 K.
 
 In a preceeding section about initializing the simulation, we mentioned
 that the ``initial'' temperature we set is not the actual temperature of the
-system but rather a way to set the total energy of the system; we will
-discuss this further. When we randomly assign velocities to each atom,
+system but rather a way to set the total energy of the system.
+When we randomly assign velocities to each atom,
 we are starting the system in a random one of its virtually uncountable
 microstates. Through simulating the interactions between atoms, we
-evolve the system through other microstates at each time step according
-to the true probabilities of those microstates given by the ensemble.
+evolve the system through other microstates at each time step where,
+according to the ergodic hypothesis, the probability of reaching a
+given microstate is given by the probability distribution governing
+the ensemble. Now, the initial state that we populate when we construct
+the system isn't likely to be an equilibrium state for the system, but as we
+run the simulation, the system evolves to reach a region of the phase
+space corresponding to equilibrium microstates. This process is represented
+by the peak at 0 and subsequent fall off in FIG.~\ref{fig:tempsteps}.
+Once the system reaches equilibrium (around step 175), the temperature
+fluctuates randomly around its equilibrium value ($T_{eq}$). We found
+that the equilibrium temperature is roughly half the initial temperature.
 
+\begin{figure}
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/TempSteps.pdf}
+	\caption{The top panel plots calculated system temperature
+	(eq.\ref{eq:temperature}) vs. time step
+	number for starting temperatures $T_0$ ranging from 200 to 800
+	K (the different lines). The bottom panel presents the same data
+	as the top panel but with the temperature at each step normalized
+	by the $T_0$ for that simulation. We varied the initial temperature
+	between 200 K and 800 K and used a time step
+	value $dt = \pwrten{-15}$ s.
+	For all the simulations, the
+	equillibrium temperature is roughly half the initial temperature.}
+	\label{fig:tempsteps}
+\end{figure}
 
 %states that the time spent by
 %a system in some region of the phase space containing microstates with
 %the same energy is proportionaly to the volume of this region.
 
-Ti over T0
+\subsection*{Diffusion Constant}
+
+Next, we investigated the melting point of the system by comparing the
+diffusion constant from simulations with different starting temperatures
+$T_0$ (or equivalently $T_{eq} \approx T_0/2$).
+In FIG.~\ref{fig:TDplot}, we show the sampled temperature and
+diffusion constant vs. step number from simulations with $T_i$ ranging
+from 100 K to 900 K. These simulations used a step size $dt = \pwrten{-14}$
+s and ran for 1000 steps. We looked at the diffusion coefficent as a
+function of time to gain insight into the state of the system. Recall that
+a system of atoms in a solid state will be constrained to the vicinity of
+their lattice sites and therefore the system will have a smaller average
+displacement when compared to a system in a liquid state. In this case,
+the atoms move more freely so the system will exhibit a larger average
+displacement. Since the diffusion constant ($D$) is proportional to the
+average
+displacement (eq.~\ref{eq:diffusion}), it provides an indication of the
+state of the system.
+
+In the bottom panel of FIG.~\ref{fig:TDplot},
+we see that $D$, towards the end of the simulation, separates the
+simulations into two groups.
+The lower band, indicates $T_0$ values for which $D$ remains constant
+over the course of the simulation. In the upper group, $D$ gradually rises
+over the course of the simulation. For the largest $T_0$ simulations,
+$D$ reaches a steady state before the end of the simulation. We
+interpret this increase in $D$ as a phase transition where the system
+changes from a solid to a liquid (it melts). Furthermore, the slope
+indicates how quickly the process happens - for systems initialized
+with a large amount of kinetic energy (higher $T_0$), the transition
+occurs faster than for systems initialized with a lower $T_0$. Closer
+inspection of FIG.~\ref{fig:TDplot} reveals a small group of systems
+with a higher final $D$ than the non melting cases. These systems
+are likely very close to the melting point so the phase transition
+takes a long time or they only partially melt.
 
 \begin{figure}
 \centering
-	\includegraphics[width=0.5\textwidth]{figures/TempSteps.pdf}
-	\caption{The top panel plots calculated system temperature vs.
-	time step
-	number for starting temperatures $T_0$ ranging from 200 to 800
-	K (the different lines). The bottom panel presents the same data
-	as the top panel but with the temperature at each step normalized
-	by the $T_0$ for that simulation. For all the simulations, the
-	equillibrium temperature is roughly half the initial temperature.}
-	\label{fig:tempsteps}
+	\includegraphics[width=0.5\textwidth]{figures/TDplot.pdf}
+	\caption{In the top panel, we show the temperature vs. time
+	step number. In the bottom panel, we plot, as a function of
+	step number, the diffusion
+	constant in units of {\AA}$^2 / s_{\mathrm{MD}}$ where
+	$s_{\mathrm{MD}}$ is the unit of time used in the simulations.
+	The different lines correspond to simulations with different
+	initial temperatures ranging from 100 K to 900 K in steps of
+	10 K. Each simulation used 1000 steps and a step size of
+	\pwrten{-14} s.}
+	\label{fig:TDplot}
 \end{figure}
+
+The information in FIG.~\ref{fig:TDplot} can be represented more
+succinctly by noting that the temperature ($T$) and $D$ are relatively
+constant over the last 200 time steps of all the simulations. Therefore,
+we plot $D$ vs. $T$ both averaged over the last 200 time steps in
+FIG.~\ref{fig:DavgDplots}. The top panel of FIG.~\ref{fig:DavgDplots}
+shows that for all the simulations, $D$ remains roughly constant over
+the last 200 time steps. The bottom panel shows a discontinuity in the
+diffusion constant as a function of temperature suggesting that the
+melting point occurs just above 300 K.
+
+\begin{figure}
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/DavgDplots.pdf}
+	\caption{In the top panel, we plot the diffusion constant
+	in units of ${\AA} ^2 / s_{\mathrm{MD}}$ vs.
+	the time step index. The bottom panel shows the diffusion
+	constant vs. the temperature where both observables have
+	been averaged over the last 200 time steps.}
+	\label{fig:DavgDplots}
+\end{figure}
+
+To ensure that the
+simulation time wasn't too short to capture the melting process for
+systems initialized close to the melting point, we ran two 
+batches of simulations with 10000 time steps each. We simulated
+systems with $T_eq$ ranging from 280 K to 292.5 K and 195 K to 205 K.
+The $D$ vs. time step index from these simulations are shown in
+FIG.~\ref{fig:meltPlotsHigh} and FIG.~\ref{fig:meltPlotsLow},
+respectively.
+
+\begin{figure}
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/meltPlots.pdf}
+	\caption{Diffusion constant vs. time step for systems with 5
+	different $T_ep$ raging from 280 K to 292.5 K in steps of 2.5 K. Each
+	simulation was run with 10000 time steps.}
+	\label{fig:meltPlotsHigh}
+\end{figure}
+
+\begin{figure}
+\centering
+	\includegraphics[width=0.5\textwidth]{figures/meltPlotsLow.pdf}
+	\caption{Diffusion constant vs. time step for systems with 5
+	different $T_ep$ raging from 245 K to 255 K in steps of 2.5 K. Each
+	simulation was run with 10000 time steps.}
+	\label{fig:meltPlotsLow}
+\end{figure}
+
+
+
+
+
 
 %\begin{figure}
 %\centering
@@ -297,6 +436,8 @@ Ti over T0
 %\end{figure}
 
 \section{Conclusions}
+
+Future work: pressure, other observables ...
 
 %\begin{thebibliography}{99}
 %%\bibitem{miller2006} G.~A.~Miller, A.~K.~Opper, and E.~J.~Stephenson, Annu.~Rev.~Nucl.~Sci.~{\bf 56}, 253 (2006).
