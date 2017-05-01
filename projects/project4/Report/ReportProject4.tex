@@ -188,7 +188,7 @@ In general, this algorithm is not self-starting since it requires the
 value of $x$ at two previous points.
 
 Now, consider a Taylor expansion of the velocity and note the
-relationshipe between velocity and acceleration $v' = a$.
+relationship between velocity and acceleration $v' = a$.
 
 \begin{align*}
 	v_{i+t} &= v_i + h v_i ' + \frac{1}{2} v_i '' + O(h^3)\\
@@ -255,13 +255,13 @@ atoms in face-centered cubic (FCC) lattice, calculate the pairwise
 forces from the Lennard-Jones potential and compute physical
 properites of the system. Figure~\ref{fig:flowchart} gives a
 general overview of the code structure by identifying key
-elements and where they reside in the within the class structure.
+elements and where they reside within the class structure.
 
 \begin{figure*}
 	\includegraphics[width=\textwidth]{figures/flowchart.pdf}
 	\caption{The flowchart gives a crude overview of how the
 	code operates. Blue boxes represent classes and
-	indicate processes carried out by one or more memeber
+	indicate processes carried out by one or more member
 	functions. Green boxes represent functions crucial to the 
 	simulation. Black arrows indicate the hierarchy of function
 	calls for one timestep. Orange arrows depict function
