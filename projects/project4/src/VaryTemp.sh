@@ -1,7 +1,7 @@
 #!/bin/bash
 
-TEMP=200
-while [ $TEMP -lt 801 ]; do
+TEMP=550
+while [ $TEMP -lt 601 ]; do
 	echo "Starting Temperature: ${TEMP}K"
 	#Save statistics.txt for each simulation
 	FILEMV="Stats_${TEMP}.txt"
@@ -10,5 +10,5 @@ while [ $TEMP -lt 801 ]; do
 	./moldyn.exe 5 $TEMP 5.26
 	mv statistics.txt ${FILEMV}
 
-	let TEMP=TEMP+10
+	let TEMP=TEMP+5
 done

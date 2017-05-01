@@ -20,21 +20,24 @@ System::~System()
 
 void System::applyPeriodicBoundaryConditions() {
   // Read here: http://en.wikipedia.org/wiki/Periodic_boundary_conditions#Practical_implementation:_continuity_and_the_minimum_image_convention
-  // Loop over atoms and check positions relative to system center
   /**/
   for(Atom *atom : m_atoms)
   {
     for(int j=0;j<3;j++)
     {
       if(atom->position[j]<0.) {
-        double multiplier = floor(-1.*atom->position[j] / m_systemSize[j]);
-        atom->position[j] += m_systemSize[j] * multiplier;
-        atom->initialPosition[j] += m_systemSize[j]*multiplier;
+//        double multiplier = floor(-1.*atom->position[j] / m_systemSize[j]);
+//        atom->position[j] += m_systemSize[j] * multiplier;
+//        atom->initialPosition[j] += m_systemSize[j]*multiplier;
+        atom->position[j] += m_systemSize[j];
+        atom->initialPosition[j] += m_systemSize[j];
       }
       if(atom->position[j]>=m_systemSize[j]) {
-        double multiplier = floor(atom->position[j] / m_systemSize[j]);
-        atom->position[j]-= m_systemSize[j] * multiplier;
-        atom->initialPosition[j] -= m_systemSize[j] * multiplier;
+//        double multiplier = floor(atom->position[j] / m_systemSize[j]);
+//        atom->position[j]-= m_systemSize[j] * multiplier;
+//        atom->initialPosition[j] -= m_systemSize[j] * multiplier;
+        atom->position[j]-= m_systemSize[j];
+        atom->initialPosition[j] -= m_systemSize[j];
       }
     }
   }

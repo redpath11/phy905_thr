@@ -77,11 +77,14 @@ void StatisticsSampler::sampleTemperature(System &system)
 
 void StatisticsSampler::sampleDensity(System &system)
 {
+  m_density = UnitConverter::massToSI(system.mass())/system.volume();
+  
 
 }
 
 void StatisticsSampler::sampleDiffusion(System &system)
 {
+  m_diffusion = 0.;
   double displacement = 0.;
   for(Atom *atom : system.atoms()) {
     vec3 dr = vec3(0,0,0);

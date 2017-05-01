@@ -8,6 +8,7 @@
 \usepackage{amsmath}
 \usepackage{multirow}
 \usepackage{natbib}
+\usepackage{listings}
 
 \newcommand{\costa}[1]{% \costa{<power>}
 	\ensuremath{\cos ^{#1} {\theta}} }
@@ -27,18 +28,61 @@
 \author{Thomas Redpath}
 \affiliation{Department of Physics, Michigan State University}
 \begin{abstract}
+Molecular dynamics simulations provide a means of studying many-body
+systems through, in this case, numerically solving Newton's equations
+of motion. We ran a
+simulation of 500 argon atoms interacting via a Lennard-Jones
+two-body potential and sampled the system's energy, temperature
+and diffusion constant. By comparing the behavior of the diffusion
+constant over time for various equilibrium temperatures, we found
+the melting point for this system to be roughly 287.5 K.
 
 \end{abstract}
 \maketitle
 
 \section{Introduction}
 
-Molecular dynamics
+Molecular dynamics simulations attempt to capture the dynamical evolution
+of a many body system. These simulations are applied in a wide range of
+disciplines from studying the internal dynamics of polymer chains
+\citep{Binder2004} to understanding the structure and function
+of biological macromolecules \citep{Karplus}. The rise of high-performance
+computing has benefited molecular dynamics simulations through allowing
+for enhanced methods of calculating the interatomic forces \citep{Kuhne2012}.
+The increasing scope and complexity of molecular
+dynamics simulations can provide further insights into the
+many problems to which this method can be applied.
+
+In this project, we
+simulate a simple system of argon atoms interacting via a pairwise
+Lennard-Jones potential \citep{Rahman1964,Verlet1967}.
+By calculating the diffusion constant, we can
+estimate the melting point for this system. In the next section, we
+discuss the statistical thermodynamics background of our project.
+Thereafter, we describe the simulation code we used and the results we
+obtained. Finally, we will briefly discuss avenues for further development
+of the tools developed for this project.
+
 
 
 \section{Theory}
 
+Statistical thermodynamics provides the theoretical basis for the type
+of classical molecular dynamics simulation we employed in this project.
+The code we developed solves Newton's equations of motion
+numerically to evolve the system along a deterministic trajectory in
+its phase space. We can then compute various macroscopic quantites
+from the system's microscopic properties.
+
 \subsection*{Lennard-Jones Potential}
+
+We model the interaction between argon atoms with a Lennard-Jones
+potential - plotted in
+FIG.~\ref{fig:lj}. This potential is often used to model interactions
+between noble gas atoms. It is parameterized by the strength
+$\epsilon$ and range of the interaction $\sigma$. Values of
+$\epsilon / k_B = 119.8$ K and $\sigma = 5.26$ {\AA} are
+optimal values for argon.
 
 
 \begin{equation}
@@ -52,6 +96,49 @@ Molecular dynamics
 	\caption{The Lennard-Jones potential (blue) and derived force (red).}
 	\label{fig:lj}
 \end{figure}
+
+\subsection*{Thermodynamic quantities}
+
+Since our system contains a fixed number of particles, it is contained
+in a fixed volume and the total energy remains constant, we identify
+it as a microcanonical ensemble. We can calculate the average energy
+of the system using the equipartition theorem. Since we are dealing
+with monoatomic argon, there are only three translational degrees of
+freedom, so the average energy is given by
+
+\begin{align*}
+	\langle E_k \rangle = \frac{3}{2} N k_B T
+%	\label{eq:equipartition}
+\end{align*}
+Re-writing this relation allows us to compute an estimate of the
+system's temperature
+
+\begin{equation}
+	T = \frac{2}{3}\frac{E_k}{N_\text{atoms} k_B}.
+	\label{eq:temperature}
+\end{equation}
+
+The diffusion constant is another observable that we can extract
+from our simulation. The Einstein relation between the mean square
+displacement and the diffusion constant ($D$) allows us to calculate
+$D$ from the atoms' average displacements at each time step:
+
+\begin{equation}
+	D = \frac{\langle r^2(t) \rangle }{6t}
+	\label{eq:diffusion}
+\end{equation}
+where 
+\begin{align*}
+	\langle r^2(t) \rangle &= \frac{1}{N} \sum_i^{N} \ r_i^2(t)\\
+	&= \frac{1}{N} \sum_i^{N} |\mathbf{r}_i(t) - \mathbf{r}_i(0)|^2
+\end{align*}
+The average of all the atomic displacements gives a measure
+of how mobile the atoms are. For example, in a solid the atoms won't
+move far from their lattice sites so $\langle r^2(t) \rangle$ will be
+small. This value will be larger for liquids and larger still for gases.
+Therefore, we can interpret the diffusion constant as a comparative
+measure of the state of the system.
+
 
 \subsection*{Units}
 
@@ -67,20 +154,6 @@ system of units
 \end{align*}
 Converting to this system of units, Boltzmann's constant becomes
 $k = (1.38 \times \pwrten{-23} )(119.7)(1.65 \times \pwrten{-21}) = 1$.
-
-\subsection*{Thermodynamic quantities}
-
-Temperature
-\begin{equation}
-	T = \frac{2}{3}\frac{E_k}{N_\text{atoms} k_B}.
-	\label{eq:temperature}
-\end{equation}
-
-Diffusion constant
-\begin{equation}
-	D = \frac{\langle r^2(t) \rangle }{6t}
-	\label{eq:diffusion}
-\end{equation}
 
 
 \section*{Algorithms and Methods}
@@ -135,6 +208,42 @@ algorithmic form for the position and velocities.
 
 \subsection*{Code}
 
+%% -------------------------- CODE LISTING -------------------------- %%
+
+%% 
+ \definecolor{mygreen}{rgb}{0,0.6,0}
+ \definecolor{mygray}{rgb}{0.5,0.5,0.5}
+ \definecolor{mymauve}{rgb}{0.58,0,0.82}
+
+ \lstset{ %
+   backgroundcolor=\color{white},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}
+   basicstyle=\footnotesize,        % the size of the fonts that are used for the code
+   breakatwhitespace=false,         % sets if automatic breaks should only happen at whitespace
+   breaklines=true,                 % sets automatic line breaking
+   captionpos=b,                    % sets the caption-position to bottom
+   commentstyle=\color{mygreen},    % comment style
+   deletekeywords={...},            % if you want to delete keywords from the given language
+   escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+   extendedchars=true,              % lets you use non-ASCII characters; for 8-bits encodings only, does not work with UTF-8
+   frame=single,	                   % adds a frame around the code
+   keepspaces=true,                 % keeps spaces in text, useful for keeping indentation of code (possibly needs columns=flexible)
+   keywordstyle=\color{blue},       % keyword style
+   language=C++,                 % the language of the code
+   otherkeywords={*,...},           % if you want to add more keywords to the set
+   numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
+   numbersep=5pt,                   % how far the line-numbers are from the code
+   numberstyle=\tiny\color{mygray}, % the style that is used for the line-numbers
+   rulecolor=\color{black},         % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
+   showspaces=false,                % show spaces everywhere adding particular underscores; it overrides 'showstringspaces'
+   showstringspaces=false,          % underline spaces within strings only
+   showtabs=false,                  % show tabs within strings adding particular underscores
+   stepnumber=2,                    % the step between two line-numbers. If it's 1, each line will be numbered
+   stringstyle=\color{mymauve},     % string literal style
+   tabsize=2,	                   % sets default tabsize to 2 spaces
+   title=\lstname                   % show the filename of files included with \lstinputlisting; also try caption instead of title
+ }
+
+
 \subsubsection*{Overview}
 
 We were supplied a code skeleton (from
@@ -170,7 +279,7 @@ for the atoms. The first step is implemented in the \texttt{main}
 function. The size of the system is determined by the number of
 unit cells in the FCC lattice and the lattice constant (the size of
 one unit cell). We studied a system of argon atoms for which
-the lattice constant is 5.26 {\AA} \textbf{REFERENCE}. The
+the lattice constant is 5.26 {\AA}. The
 $\epsilon,\sigma$ parameters specify the L-J potential, for argon
 these are $\epsilon / k_B = 119.8\mathrm{K}$, $ \sigma=3.405
 {\AA}$.
@@ -194,10 +303,43 @@ random initial kinetic energy. The \texttt{System::removeTotalVelocity}
 function subtracts the net velocity from each atom so that the center of
 mass of the system is stationary.
 
+
+\begin{lstlisting}
+double ssize = ((double) numberOfUnitCellsEachDimension) * latticeConstant;
+setSystemSize(vec3(ssize, ssize, ssize));
+
+const double b = latticeConstant/2.;
+const double x[4] = {0.,b ,0.,b };
+const double y[4] = {0.,b ,b ,0.};
+const double z[4] = {0.,0.,b ,b };
+for(int i=0;i<numberOfUnitCellsEachDimension;i++)
+{// place unit cells along x
+  double bx = ((double) i)*b*2. + offset;
+  for(int j=0;j<numberOfUnitCellsEachDimension;j++)
+  {// place unit cells along y
+    double by = ((double) j)*b*2. + offset;
+    for(int k=0;k<numberOfUnitCellsEachDimension;k++)
+    {// place unit cells along z
+      double bz = ((double) k)*b*2. + offset;
+      for(int a=0;a<4;a++)
+      {// place 4 atoms
+         Atom *atom;
+         atom = new Atom(UnitConverter::massFromSI(6.63352088e-26));
+         atom->position.set(x[a]+bx,y[a]+by,z[a]+bz);
+         atom->initialPosition.set(x[a]+bx,y[a]+by,z[a]+bz);
+         atom->resetVelocityMaxwellian(temperature);
+         m_atoms.push_back(atom);
+      }// END place 4 atoms
+    }// END place unit cells along z
+  }// END place unit cells along y
+}// END place unit cells along x
+\end{lstlisting}
+
 An initialized system consisting of 500 atoms (5 unit cells) is shown in FIG.
 ~\ref{fig:init300K}. We used Ovito \citep{ovito} to visualize the system.
-
-Density?
+The density of our system is then given by $(Nm)/(N_x N_y N_z b^3)$
+where $N$ is the number of atoms, $m$ is the mass of one atom, $N_i$
+is the number of unit cells in each dimension.
 
 \begin{figure}
 \centering
@@ -221,21 +363,47 @@ Density?
 
 \subsubsection*{Simulation}
 
-general flow
+A general overview of the code structure is depicted in FIG.~\ref{fig:flowchart}.
+We used the velocity Verlet algorithm to update the positions and velocities of
+the atoms in our simulation at every time step. Furthermore, we implemented
+periodic boundary conditions to confine the atoms in our system to a finite
+volume. Each time the positions are updated, we run the following routine to
+ensure that all atoms are contained inside the specified volume. We also need
+to adjust the initial position vector accordingly in order to properly compute the
+diffusion constant. Finally, to improve the efficiency of the code, we exploit the
+$1/r^6$ behavior of the potential and set the contribution to the net force to
+zero when atoms are more than 2.5 {\AA} apart. To compensate for this, we
+subtract the constant $V_{LJ}(r=2.5)$ from the total potential.
 
-how observables are sampled; mention that $D$ is calculated for every
-step
 
-efficiency
+\begin{lstlisting}
+for(Atom *atom : m_atoms)
+{
+  for(int j=0;j<3;j++)
+  {
+    if(atom->position[j]<0.) {
+      atom->position[j] += m_systemSize[j];
+      atom->initialPosition[j] += m_systemSize[j];
+    }
+    if(atom->position[j]>=m_systemSize[j]) {
+      atom->position[j]-= m_systemSize[j];
+      atom->initialPosition[j] -= m_systemSize[j];
+    }
+  }
+}
+\end{lstlisting}
 
-
-
-Melting point?
-
-
-
-\subsubsection*{Output}
-
+Once the positions are updated at each time step, we sample several
+macroscopic properites
+of the system. This is handled by the \texttt{StatisticsSampler} class.
+These functions loop over all atoms to calculate the total kinetic energy,
+the
+temperature and the diffusion constant for the system. This class also
+retrieves the potential energy that is calculated when the forces are
+updated. These quantities are written out to a file. Finally, the positions
+and velocity magnitudes at each time step for all atoms are also written to
+a \texttt{.xyz} file that can be read into Ovito to produce a movie of
+the simulation.
 
 
 \section*{Results and discussion}
@@ -371,7 +539,7 @@ batches of simulations with 10000 time steps each. We simulated
 systems with $T_eq$ ranging from 280 K to 292.5 K and 195 K to 205 K.
 The $D$ vs. time step index from these simulations are shown in
 FIG.~\ref{fig:meltPlotsHigh} and FIG.~\ref{fig:meltPlotsLow},
-respectively.
+respectively and show the melting point to lie between 285 and 287.5 K.
 
 \begin{figure}
 \centering
@@ -437,7 +605,14 @@ respectively.
 
 \section{Conclusions}
 
-Future work: pressure, other observables ...
+We have developed a simple molecular dynamics simulation for argon atoms
+interacting via a simple two-body force. We extracted the system energy,
+temperature and diffusion constant and used these to determine the melting
+point as roughly 287.5 K. In order to compare this result to the actual argon
+melting point, we need to calculate the pressure of our simulated system.
+This is a logical next step that will involve additions to the simulation package.
+Another avenue for further study, is to vary the size of the system and
+explore how this impacts the random fluctuations of the macroscopic observables.
 
 %\begin{thebibliography}{99}
 %%\bibitem{miller2006} G.~A.~Miller, A.~K.~Opper, and E.~J.~Stephenson, Annu.~Rev.~Nucl.~Sci.~{\bf 56}, 253 (2006).

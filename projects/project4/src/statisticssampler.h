@@ -27,5 +27,6 @@ public:
     double totalEnergy() { return m_kineticEnergy+m_potentialEnergy; }
     double temperature() { return m_temperature; }
     double density() { return m_density; }
+    double diffusion() { return m_diffusion; }
 };
 #endif

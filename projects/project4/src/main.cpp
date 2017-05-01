@@ -14,7 +14,7 @@ using namespace std;
 int main(int numberOfArguments, char **argumentList)
 {
     int numberOfUnitCells = 5;
-    double initialTemperature = UnitConverter::temperatureFromSI(300.0); // measured in Kelvin
+    double initialTemperature = UnitConverter::temperatureFromSI(600.0); // measured in Kelvin
     double latticeConstant = UnitConverter::lengthFromAngstroms(5.26); // measured in angstroms
 
     // If a first argument is provided, it is the number of unit cells
@@ -24,7 +24,7 @@ int main(int numberOfArguments, char **argumentList)
     // If a third argument is provided, it is the lattice constant determining the density (measured in angstroms)
     if(numberOfArguments > 3) latticeConstant = UnitConverter::lengthFromAngstroms(atof(argumentList[3]));
 
-    double dt = UnitConverter::timeFromSI(1e-15); // Measured in seconds.
+    double dt = UnitConverter::timeFromSI(1e-14); // Measured in seconds.
 
     cout << "One unit of length is " << UnitConverter::lengthToSI(1.0) << " meters" << endl;
     cout << "One unit of velocity is " << UnitConverter::velocityToSI(1.0) << " meters/second" << endl;
@@ -48,6 +48,10 @@ int main(int numberOfArguments, char **argumentList)
     system.removeTotalVelocity();// use this if the system contains just one type of atoms
 
     StatisticsSampler statisticsSampler;
+    system.calculateMass();
+    statisticsSampler.sampleDensity(system);
+    cout << "Density = " << statisticsSampler.density() << endl;
+
     IO movie("movie.xyz"); // To write the state to file
 
     cout << setw(20) << "Timestep" <<
@@ -55,10 +59,11 @@ int main(int numberOfArguments, char **argumentList)
             setw(20) << "Temperature" <<
             setw(20) << "KineticEnergy" <<
             setw(20) << "PotentialEnergy" <<
-            setw(20) << "TotalEnergy" << endl;
+            setw(20) << "TotalEnergy" <<
+	    setw(20) << "Diffusion const" << endl;
 
 /**/
-    for(int timestep=0; timestep<500; timestep++) {
+    for(int timestep=0; timestep<1000; timestep++) {
 //        cout << " ----- Step: " << timestep << " ----- " << endl << endl;
         system.step(dt);
 	system.applyPeriodicBoundaryConditions();
@@ -70,15 +75,17 @@ int main(int numberOfArguments, char **argumentList)
                     setw(20) << system.time() <<
 //                    setw(20) << statisticsSampler.temperature() <<
                     setw(20) << UnitConverter::temperatureToSI(statisticsSampler.temperature()) <<
-                    setw(20) << statisticsSampler.kineticEnergy() <<
-                    setw(20) << statisticsSampler.potentialEnergy() <<
-                    setw(20) << statisticsSampler.totalEnergy() << endl;
+                    setw(20) << UnitConverter::energyToEv(statisticsSampler.kineticEnergy()) <<
+                    setw(20) << UnitConverter::energyToEv(statisticsSampler.potentialEnergy()) <<
+                    setw(20) << UnitConverter::energyToEv(statisticsSampler.totalEnergy()) <<
+		    setw(20) << statisticsSampler.diffusion() << endl;
         }
         movie.saveState(system);
     }
 
 
     movie.close();
+    cout << "Density = " << statisticsSampler.density() << endl;
 
 /*
     for(int i=0;i<system.getNumberOfAtoms();i++)
